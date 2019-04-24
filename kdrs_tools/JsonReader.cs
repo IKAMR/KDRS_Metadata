@@ -14,7 +14,6 @@ namespace Metadata_XLS
 {
     class JsonReader
 
-        //testing
     {
         public void ParseJson(string filename, List<string> priorities)
         {
