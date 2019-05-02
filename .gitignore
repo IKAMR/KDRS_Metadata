@@ -11,6 +11,7 @@
 *.userprefs
 
 *.xls
+*.xslx
 
 # Build results
 [Dd]ebug/
