@@ -54,7 +54,7 @@ namespace Metadata_XLS
 
             xlWorkBook.Sheets[1].Select();
 
-            xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xls"), XlFileFormat.xlWorkbookNormal);
+            xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx"));
 
             xlWorkBook.Close(true, misValue, misValue);
             xlApp1.Quit();
