@@ -31,7 +31,7 @@ namespace Metadata_XLS
             }
 
             Template template = JsonConvert.DeserializeObject<Template>(json);
-
+          
             AddTemplateInfo(xlWorkBook, template);
 
             AddTableOverview(xlApp1, xlWorkBook, template.TemplateSchema, priorities);
@@ -154,7 +154,8 @@ namespace Metadata_XLS
                 "Table",
                 "Folder",
                 "Schema",
-                "Rows"
+                "Rows",
+                "Priorities"
             };
 
             foreach (string name in columnNames)
@@ -176,6 +177,7 @@ namespace Metadata_XLS
                     tableOverviewWorksheet.Cells[count, 2] = table.Folder;
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
+                    tableOverviewWorksheet.Cells[count, 5] = table.TablePriority;
 
                     count++;
                 }

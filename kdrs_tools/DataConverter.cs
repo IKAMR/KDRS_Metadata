@@ -19,6 +19,7 @@ namespace Metadata_XLS
         {
 
             Application xlApp1 = new Application();
+            Workbooks xlWorkbooks = xlApp1.Workbooks;
 
             XmlDocument xmldoc = new XmlDocument();
             xmldoc.Load(filename);
@@ -33,7 +34,7 @@ namespace Metadata_XLS
 
             object misValue = System.Reflection.Missing.Value;
 
-            xlWorkBook = xlApp1.Workbooks.Add(misValue);
+            xlWorkBook = xlWorkbooks.Add(misValue);
 
             AddDBInfo(xlWorkBook, root, nsmgr);
 
@@ -58,13 +59,16 @@ namespace Metadata_XLS
 
             antTables = "Number of tables " + tables.ChildNodes.Count.ToString();
 
-            xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xls"), XlFileFormat.xlWorkbookNormal);
+            xlWorkBook.Sheets[1].Select();
 
-            xlWorkBook.Close(true, misValue, misValue);
+            xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx"));
+
+            xlWorkBook.Close();
             xlApp1.Quit();
 
 
             Marshal.ReleaseComObject(xlWorkBook);
+            Marshal.ReleaseComObject(xlWorkbooks);
             Marshal.ReleaseComObject(xlApp1);
 
         }

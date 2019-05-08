@@ -58,7 +58,9 @@ namespace Metadata_XLS
 
         private void Form1_DragDrop(object sender, DragEventArgs e)
         {
-            Console.WriteLine("Before");
+            try
+            {
+                Console.WriteLine("Before");
             foreach (string l in priorities)
             {
                 Console.WriteLine(l);
@@ -79,7 +81,9 @@ namespace Metadata_XLS
                 {
                     case ".json":
                         label1.Text = "Converting " + fileName;
-                        jsonReader.ParseJson(fileName, priorities);
+                        
+                            jsonReader.ParseJson(fileName, priorities);
+                        
                         break;
                     case ".xml":
                         label1.Text = "Converting " + fileName;
@@ -90,6 +94,12 @@ namespace Metadata_XLS
 
                 label1.Text = "Job complete!";
 
+            }
+            }
+            catch (Exception ex)
+            {
+               // MessageBox.Show(ex.Message);
+                label1.Text = "Error: " + ex.Message;
             }
         }
         //----------------------------------------------------------------------------------------------
