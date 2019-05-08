@@ -138,6 +138,20 @@ namespace Metadata_XLS
                 priorities.Remove("SYSTEM");
             }
 
+            if (priorityStat.Checked)
+                priorities.Add("STAT");
+            else if (!priorityHigh.Checked)
+            {
+                priorities.Remove("STAT");
+            }
+
+            if (priorityDummy.Checked)
+                priorities.Add("DUMMY");
+            else if (!priorityHigh.Checked)
+            {
+                priorities.Remove("DUMMY");
+            }
+
             if (priorityEmpty.Checked)
                 priorities.Add("EMPTY");
             else if (!priorityHigh.Checked)
