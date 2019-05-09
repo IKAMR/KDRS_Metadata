@@ -6,7 +6,7 @@
   "systemName" : "test systemnavn",
   "systemVersion" : "ukjent",
   "creator" : "tore.fadnes@ikamr.no",
-  "organizations" : [ "47d7d4d7-5dbb-41a4-93ae-4fbe15d20f2a" , "47d7d4d7-5dbb-41a4-93ae-4fbe15d20f2a"],
+  "organizations" : null,
   "creationDate" : 1554796703141,
   "templateVisibility" : "PRIVATE",
   "templateSchema" : {

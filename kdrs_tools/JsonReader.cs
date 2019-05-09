@@ -60,8 +60,8 @@ namespace Metadata_XLS
             xlApp1.Quit();
 
 
-            Marshal.ReleaseComObject(xlWorkBook);
-            Marshal.ReleaseComObject(xlApp1);
+           // Marshal.ReleaseComObject(xlWorkBook);
+          //  Marshal.ReleaseComObject(xlApp1);
 
         }
 
@@ -139,7 +139,7 @@ namespace Metadata_XLS
                 columnCount++;
             }
 
-            Marshal.ReleaseComObject(tableWorksheet);
+           // Marshal.ReleaseComObject(tableWorksheet);
         }
 
         //*************************************************************************
@@ -183,7 +183,7 @@ namespace Metadata_XLS
                 }
             }
 
-            Marshal.ReleaseComObject(tableOverviewWorksheet);
+           // Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
         //*************************************************************************
 
@@ -214,9 +214,23 @@ namespace Metadata_XLS
             foreach (string s in fieldNames)
             {
                 templateSheet.Cells[count, 1] = s;
-
                 count++;
+
+                if (s == "organizations" && template.Organizations != null && template.Organizations.Count > 1)
+                {
+                    for (int i = 1; i < template.Organizations.Count; i++)
+                    {
+                        templateSheet.Cells[count, 1] = null;
+                        count++;
+                    }
+                }
+
+                
             }
+
+            double creationDate = template.CreationDate;
+
+            var date = new DateTime(1970, 1, 1, 0, 0, 0).AddMilliseconds(creationDate).ToLocalTime();
 
             templateSheet.Cells[1, 2] = template.ModelVersion;
             templateSheet.Cells[2, 2] = template.Uuid;
@@ -225,12 +239,27 @@ namespace Metadata_XLS
             templateSheet.Cells[5, 2] = template.SystemName;
             templateSheet.Cells[6, 2] = template.SystemVersion;
             templateSheet.Cells[7, 2] = template.Creator;
-            templateSheet.Cells[8, 2] = template.Organizations;
-            templateSheet.Cells[9, 2] = template.CreationDate;
-            templateSheet.Cells[10, 2] = template.TemplateVisibility;
-            templateSheet.Cells[11, 2] = template.TemplateSchema.Tables.Count.ToString();
 
-            Marshal.ReleaseComObject(templateSheet);
+            int count2 = 8;
+            if (template.Organizations != null)
+            {
+                foreach (string org in template.Organizations)
+                {
+                    templateSheet.Cells[count2, 2] = org;
+                    count2++;
+                }
+            }
+            else
+            {
+                templateSheet.Cells[count2, 2] = null;
+                count2++;
+            }
+            
+            templateSheet.Cells[count2, 2] = date;
+            templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
+            templateSheet.Cells[count2 + 2, 2] = template.TemplateSchema.Tables.Count.ToString();
+
+          //  Marshal.ReleaseComObject(templateSheet);
 
         }
     }
@@ -246,8 +275,8 @@ namespace Metadata_XLS
         public string SystemName { get; set; }
         public string SystemVersion { get; set; }
         public string Creator { get; set; }
-        public string Organizations { get; set; }
-        public string CreationDate { get; set; }
+        public List<string> Organizations { get; set; }
+        public double CreationDate { get; set; }
         public string TemplateVisibility { get; set; }
         public Schema TemplateSchema { get; set; }
         // public string TablePriority { get; set; }
