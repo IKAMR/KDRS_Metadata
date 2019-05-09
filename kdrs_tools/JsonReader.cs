@@ -60,8 +60,8 @@ namespace Metadata_XLS
             xlApp1.Quit();
 
 
-           // Marshal.ReleaseComObject(xlWorkBook);
-          //  Marshal.ReleaseComObject(xlApp1);
+            Marshal.ReleaseComObject(xlWorkBook);
+            Marshal.ReleaseComObject(xlApp1);
 
         }
 
@@ -139,7 +139,7 @@ namespace Metadata_XLS
                 columnCount++;
             }
 
-           // Marshal.ReleaseComObject(tableWorksheet);
+            Marshal.ReleaseComObject(tableWorksheet);
         }
 
         //*************************************************************************
@@ -183,7 +183,7 @@ namespace Metadata_XLS
                 }
             }
 
-           // Marshal.ReleaseComObject(tableOverviewWorksheet);
+            Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
         //*************************************************************************
 
@@ -259,7 +259,7 @@ namespace Metadata_XLS
             templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
             templateSheet.Cells[count2 + 2, 2] = template.TemplateSchema.Tables.Count.ToString();
 
-          //  Marshal.ReleaseComObject(templateSheet);
+            Marshal.ReleaseComObject(templateSheet);
 
         }
     }
