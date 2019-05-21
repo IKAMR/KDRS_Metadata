@@ -10,19 +10,31 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace Metadata_XLS
+namespace KDRS_Tools
 {
     class JsonReader
 
     {
+
         public void ParseJson(string filename, List<string> priorities)
         {
+
             Microsoft.Office.Interop.Excel.Application xlApp1 = new Microsoft.Office.Interop.Excel.Application();
 
+            xlApp1.Visible = true;
+
+            Workbooks xlWorkBooks;
             Workbook xlWorkBook;
 
+            Sheets xlWorkSheets;
+
+            xlWorkBooks = xlApp1.Workbooks;
+
             object misValue = System.Reflection.Missing.Value;
-            xlWorkBook = xlApp1.Workbooks.Add(misValue);
+
+            xlWorkBook = xlWorkBooks.Add(misValue);
+
+            xlWorkSheets = xlWorkBook.Sheets;
 
             string json;
             using (StreamReader r = new StreamReader(filename))
@@ -31,10 +43,14 @@ namespace Metadata_XLS
             }
 
             Template template = JsonConvert.DeserializeObject<Template>(json);
-          
-            AddTemplateInfo(xlWorkBook, template);
 
-            AddTableOverview(xlApp1, xlWorkBook, template.TemplateSchema, priorities);
+            Worksheet templateSheet = xlWorkSheets.get_Item(1);
+            AddTemplateInfo(templateSheet, template);
+            Marshal.ReleaseComObject(templateSheet);
+
+            Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+            AddTableOverview(tableOverviewWorksheet, template.TemplateSchema, priorities);
+            Marshal.ReleaseComObject(tableOverviewWorksheet);
 
             Console.WriteLine("After");
             foreach (string l in priorities)
@@ -46,8 +62,12 @@ namespace Metadata_XLS
             {
                 if (priorities.Contains(table.TablePriority))
                 {
-                    //Console.WriteLine("Tabell: {0} , prioritet {1}" ,table.Name, table.TablePriority);
-                    AddTable(xlWorkBook, template.TemplateSchema, table);
+
+                    Worksheet tableWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+
+                    AddTable(tableWorksheet, template.TemplateSchema, table);
+
+                    Marshal.ReleaseComObject(tableWorksheet);
 
                 }
             }
@@ -56,22 +76,29 @@ namespace Metadata_XLS
 
             xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx"));
 
+            Marshal.ReleaseComObject(xlWorkSheets);
+
             xlWorkBook.Close(true, misValue, misValue);
-            xlApp1.Quit();
-
-
             Marshal.ReleaseComObject(xlWorkBook);
+
+            xlWorkBook = null;
+
+            xlApp1.Quit();
+            
+            Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp1);
+
+            xlApp1 = null;
+            Console.WriteLine("App: " + xlApp1);
 
         }
 
         //*************************************************************************
 
         // Creates a worksheet with information for each table
-        private void AddTable(Workbook workbook, Schema schema, Table table)
+        private void AddTable(Worksheet tableWorksheet, Schema schema, Table table)
         {
-            Worksheet tableWorksheet;
-            tableWorksheet = (Worksheet)workbook.Application.Worksheets.Add(After: workbook.Sheets[workbook.Sheets.Count]);
+
             tableWorksheet.Name = table.Name;
 
             List<string> columnNames = new List<string>()
@@ -144,9 +171,8 @@ namespace Metadata_XLS
 
         //*************************************************************************
 
-        private void AddTableOverview(Application excelApp, Workbook workbook, Schema schema, List<string> priorities)
+        private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
         {
-            Worksheet tableOverviewWorksheet = (Worksheet)workbook.Application.Worksheets.Add(After: workbook.Sheets[workbook.Sheets.Count]);
             tableOverviewWorksheet.Name = "Tables";
 
             List<string> columnNames = new List<string>()
@@ -170,8 +196,10 @@ namespace Metadata_XLS
                 {
                     Range c1 = tableOverviewWorksheet.Cells[count, 1];
                     Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                    Range linkCell = excelApp.get_Range(c1, c2);
-                    tableOverviewWorksheet.Hyperlinks.Add(linkCell, "", table.Name + "!A1", "", table.Name);
+                    Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
+
+                    Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+                    links.Add(linkCell, "", table.Name + "!A1", "", table.Name);
 
                     //tableOverviewWorksheet.Cells[count, 1] = table.Name;
                     tableOverviewWorksheet.Cells[count, 2] = table.Folder;
@@ -180,6 +208,11 @@ namespace Metadata_XLS
                     tableOverviewWorksheet.Cells[count, 5] = table.TablePriority;
 
                     count++;
+
+                    Marshal.ReleaseComObject(c1);
+                    Marshal.ReleaseComObject(c2);
+                    Marshal.ReleaseComObject(linkCell);
+                    Marshal.ReleaseComObject(links);
                 }
             }
 
@@ -188,9 +221,8 @@ namespace Metadata_XLS
         //*************************************************************************
 
         // Creates a worksheet with information about the template.
-        private void AddTemplateInfo(Workbook workbook, Template template)
+        private void AddTemplateInfo(Worksheet templateSheet, Template template)
         {
-            Worksheet templateSheet = (Worksheet)workbook.Worksheets.get_Item(1);
             templateSheet.Name = "Template";
 
             List<string> fieldNames = new List<string>()
@@ -225,7 +257,7 @@ namespace Metadata_XLS
                     }
                 }
 
-                
+
             }
 
             double creationDate = template.CreationDate;
@@ -254,7 +286,7 @@ namespace Metadata_XLS
                 templateSheet.Cells[count2, 2] = null;
                 count2++;
             }
-            
+
             templateSheet.Cells[count2, 2] = date;
             templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
             templateSheet.Cells[count2 + 2, 2] = template.TemplateSchema.Tables.Count.ToString();
@@ -267,7 +299,6 @@ namespace Metadata_XLS
 
     public class Template
     {
-
         public string ModelVersion { get; set; }
         public string Uuid { get; set; }
         public string Name { get; set; }
@@ -288,7 +319,6 @@ namespace Metadata_XLS
         public string Name { get; set; }
         public string Description { get; set; }
         public string Folder { get; set; }
-
     }
 
     public class Table
@@ -305,7 +335,6 @@ namespace Metadata_XLS
 
     public class Column
     {
-
         public string Name { get; set; }
         public string Description { get; set; }
         public string Folder { get; set; }

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace Metadata_XLS
+namespace KDRS_Tools
 {
     class DataConverter
     {

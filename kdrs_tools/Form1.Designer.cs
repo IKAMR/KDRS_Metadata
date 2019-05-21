@@ -1,4 +1,4 @@
-﻿namespace Metadata_XLS
+﻿namespace KDRS_Tools
 {
     partial class Form1
     {

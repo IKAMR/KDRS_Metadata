@@ -13,11 +13,16 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
 
-namespace Metadata_XLS
+namespace KDRS_Tools
 {
     public partial class Form1 : Form
     {
         Microsoft.Office.Interop.Excel.Application xlApp;
+
+        Workbooks xlWorkBooks;
+        Workbook xlWorkBook;
+
+        Sheets xlWorkSheets;
 
         DataConverter converter = new DataConverter();
         JsonReader jsonReader = new JsonReader();
@@ -41,9 +46,23 @@ namespace Metadata_XLS
             {
                 Console.WriteLine("Excel Ok!");
             }
+           // xlApp.Visible = true;
+            xlWorkBooks = xlApp.Workbooks;
+
+            // object misValue = System.Reflection.Missing.Value;
+
+            string filename = @"C:\developer\c#\kdrs_tools\decom_test_template_1";
+            xlWorkBook = xlWorkBooks.Open(filename);
+            //
+            //xlWorkSheets = xlWorkBook.Sheets;
+
+            xlWorkBook.Close();
 
             xlApp.Quit();
 
+            Marshal.ReleaseComObject(xlWorkBook);
+
+            Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp);
         }
 
@@ -100,6 +119,13 @@ namespace Metadata_XLS
             {
                // MessageBox.Show(ex.Message);
                 label1.Text = "Error: " + ex.Message;
+            }
+            finally
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
         //----------------------------------------------------------------------------------------------
