@@ -19,11 +19,6 @@ namespace KDRS_Tools
     {
         Microsoft.Office.Interop.Excel.Application xlApp;
 
-        Workbooks xlWorkBooks;
-        Workbook xlWorkBook;
-
-        Sheets xlWorkSheets;
-
         DataConverter converter = new DataConverter();
         JsonReader jsonReader = new JsonReader();
 
@@ -46,23 +41,10 @@ namespace KDRS_Tools
             {
                 Console.WriteLine("Excel Ok!");
             }
-           // xlApp.Visible = true;
-            xlWorkBooks = xlApp.Workbooks;
 
-            // object misValue = System.Reflection.Missing.Value;
-
-            string filename = @"C:\developer\c#\kdrs_tools\decom_test_template_1";
-            xlWorkBook = xlWorkBooks.Open(filename);
-            //
-            //xlWorkSheets = xlWorkBook.Sheets;
-
-            xlWorkBook.Close();
 
             xlApp.Quit();
 
-            Marshal.ReleaseComObject(xlWorkBook);
-
-            Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp);
         }
 

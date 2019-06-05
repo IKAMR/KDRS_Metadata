@@ -32,12 +32,17 @@ namespace KDRS_Tools
 
             Workbook xlWorkBook;
 
+            Sheets xlWorkSheets;
+
             object misValue = System.Reflection.Missing.Value;
 
             xlWorkBook = xlWorkbooks.Add(misValue);
 
-            AddDBInfo(xlWorkBook, root, nsmgr);
+            xlWorkSheets = xlWorkBook.Sheets;
 
+            Worksheet DBWorkSheet = xlWorkSheets.get_Item(1);
+            AddDBInfo(DBWorkSheet, root, nsmgr);
+            Marshal.ReleaseComObject(DBWorkSheet);
 
             XmlNode schemas = root.SelectSingleNode("//siard:schemas", nsmgr);
             XmlNode tables = root.SelectSingleNode("//siard:tables", nsmgr);
@@ -45,14 +50,19 @@ namespace KDRS_Tools
             foreach (XmlNode schema in schemas.ChildNodes)
             {
                 schemaName = root.SelectSingleNode("//siard:name", nsmgr).InnerText;
-                //Console.WriteLine("Adding table overview: " + tables);
-                AddTableOverview(xlApp1, xlWorkBook, tables);
+
+                Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+                AddTableOverview(tableOverviewWorksheet, tables);
+                Marshal.ReleaseComObject(tableOverviewWorksheet);
 
                 foreach (XmlNode table in tables.ChildNodes)
                 {
                     //Console.WriteLine("Adding table: " + table.SelectSingleNode("siard:foreignKeys/siard:foreignKey/siard:name", nsmgr).InnerText);
                     //Console.WriteLine("Adding table: " + table["name"].InnerText);
-                    AddTable(xlWorkBook, table, nsmgr);
+
+                    Worksheet tableWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+
+                    AddTable(tableWorksheet, table, nsmgr);
                 }
 
             }
@@ -70,14 +80,12 @@ namespace KDRS_Tools
             Marshal.ReleaseComObject(xlWorkBook);
             Marshal.ReleaseComObject(xlWorkbooks);
             Marshal.ReleaseComObject(xlApp1);
-
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Creates a worksheet with information about the database.
-        private void AddDBInfo(Workbook workbook, XmlNode table, XmlNamespaceManager nsmgr)
+        private void AddDBInfo(Worksheet DBWorkSheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
-            Worksheet DBWorkSheet = (Worksheet)workbook.Worksheets.get_Item(1);
             DBWorkSheet.Name = "DB";
 
             List<string> fieldNames = new List<string>()
@@ -122,16 +130,14 @@ namespace KDRS_Tools
                 cnt++;
             }
 
+            DBWorkSheet.Columns.AutoFit();
             Marshal.ReleaseComObject(DBWorkSheet);
-
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Creates a worksheet with information for each table
-        private void AddTable(Workbook workbook, XmlNode table, XmlNamespaceManager nsmgr)
+        private void AddTable(Worksheet tableWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
-            Worksheet tableWorksheet;
-            tableWorksheet = (Worksheet)workbook.Application.Worksheets.Add(After: workbook.Sheets[workbook.Sheets.Count]);
             tableWorksheet.Name = table["name"].InnerText;
 
             int cellCount = 2;
@@ -176,7 +182,6 @@ namespace KDRS_Tools
 
             foreach (string[] rn in rowNamesArray)
             {
-               // Console.WriteLine(rn[1]);
                 tableWorksheet.Cells[cellCount, 1] = rn;
                 tableWorksheet.Cells[cellCount, 2] = rn[1];
 
@@ -299,8 +304,8 @@ namespace KDRS_Tools
                 cellCount++;
             }
 
+            tableWorksheet.Columns.AutoFit();
             Marshal.ReleaseComObject(tableWorksheet);
-
         }
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -323,9 +328,9 @@ namespace KDRS_Tools
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Creates a worksheet with table overview
-        private void AddTableOverview(Application excelApp, Workbook workbook, XmlNode tables)
+        private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNode tables)
         {
-            Worksheet tableOverviewWorksheet = (Worksheet)workbook.Application.Worksheets.Add(After: workbook.Sheets[workbook.Sheets.Count]);
+            
             tableOverviewWorksheet.Name = "Tables";
 
             List<string> columnNames = new List<string>()
@@ -372,18 +377,25 @@ namespace KDRS_Tools
                 string name = table["name"].InnerText;
                 Range c1 = tableOverviewWorksheet.Cells[count, 1];
                 Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                Range linkCell = excelApp.get_Range(c1, c2);
+                Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
 
-                tableOverviewWorksheet.Hyperlinks.Add(linkCell, "", name + "!A1", "", name);
+                Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+
+                links.Add(linkCell, "", name + "!A1", "", name);
 
                 tableOverviewWorksheet.Cells[count, 2] = table["folder"].InnerText;
                 tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
                 tableOverviewWorksheet.Cells[count, 4] = table["rows"].InnerText;
                 count++;
+
+                Marshal.ReleaseComObject(c1);
+                Marshal.ReleaseComObject(c2);
+                Marshal.ReleaseComObject(linkCell);
+                Marshal.ReleaseComObject(links);
             }
 
+            tableOverviewWorksheet.Columns.AutoFit();
             Marshal.ReleaseComObject(tableOverviewWorksheet);
-
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     }

@@ -21,7 +21,7 @@ namespace KDRS_Tools
 
             Microsoft.Office.Interop.Excel.Application xlApp1 = new Microsoft.Office.Interop.Excel.Application();
 
-            xlApp1.Visible = true;
+            //xlApp1.Visible = true;
 
             Workbooks xlWorkBooks;
             Workbook xlWorkBook;
@@ -90,7 +90,6 @@ namespace KDRS_Tools
 
             xlApp1 = null;
             Console.WriteLine("App: " + xlApp1);
-
         }
 
         //*************************************************************************
@@ -166,6 +165,7 @@ namespace KDRS_Tools
                 columnCount++;
             }
 
+            tableWorksheet.Columns.AutoFit();
             Marshal.ReleaseComObject(tableWorksheet);
         }
 
@@ -216,6 +216,7 @@ namespace KDRS_Tools
                 }
             }
 
+            tableOverviewWorksheet.Columns.AutoFit();
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
         //*************************************************************************
@@ -256,8 +257,6 @@ namespace KDRS_Tools
                         count++;
                     }
                 }
-
-
             }
 
             double creationDate = template.CreationDate;
@@ -291,8 +290,9 @@ namespace KDRS_Tools
             templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
             templateSheet.Cells[count2 + 2, 2] = template.TemplateSchema.Tables.Count.ToString();
 
-            Marshal.ReleaseComObject(templateSheet);
+            templateSheet.Columns.AutoFit();
 
+            Marshal.ReleaseComObject(templateSheet);
         }
     }
     //====================================================================================
@@ -310,7 +310,6 @@ namespace KDRS_Tools
         public double CreationDate { get; set; }
         public string TemplateVisibility { get; set; }
         public Schema TemplateSchema { get; set; }
-        // public string TablePriority { get; set; }
     }
 
     public class Schema
@@ -330,7 +329,6 @@ namespace KDRS_Tools
         public string Description { get; set; }
         public List<Column> Columns { get; set; }
         public PrimaryKey PrimaryKey { get; set; }
-        //public Columns columns { get; set; }
     }
 
     public class Column
@@ -339,7 +337,6 @@ namespace KDRS_Tools
         public string Description { get; set; }
         public string Folder { get; set; }
         public string Datatype { get; set; }
-        // public string TablePriority { get; set; }
     }
 
     public class PrimaryKey
