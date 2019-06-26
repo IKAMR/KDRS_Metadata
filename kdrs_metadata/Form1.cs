@@ -1,8 +1,10 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,6 +17,12 @@ using System.Xml.XPath;
 
 namespace KDRS_Metadata
 {
+    public static class Globals
+    {
+        public static readonly String toolName = "KDRS-Metadata";
+        public static readonly String toolVersion = "0.5";
+    }
+
     public partial class Form1 : Form
     {
         Microsoft.Office.Interop.Excel.Application xlApp;
@@ -22,7 +30,9 @@ namespace KDRS_Metadata
         DataConverter converter = new DataConverter();
         JsonReader jsonReader = new JsonReader();
 
-        List<string> priorities = new List<string> {  };
+        List<string> priorities = new List<string> { };
+
+        Hashtable myHashtable;
 
         public Form1()
         {
@@ -42,7 +52,6 @@ namespace KDRS_Metadata
                 Console.WriteLine("Excel Ok!");
             }
 
-
             xlApp.Quit();
 
             Marshal.ReleaseComObject(xlApp);
@@ -59,51 +68,55 @@ namespace KDRS_Metadata
 
         private void Form1_DragDrop(object sender, DragEventArgs e)
         {
+            CheckExcellProcesses();
+            string fileName = "No file added";
+
             try
             {
-                Console.WriteLine("Before");
-            foreach (string l in priorities)
-            {
-                Console.WriteLine(l);
-            }
-            CheckPrioList();
-            label1.Text = "";
-            label2.Text = "";
-            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            if (files.Count() > 1)
-                label1.Text = "Vennligst bare en fil av gangen... ;D";
-            else
-            {
-                string fileName = files[0].ToString();
-
-                string filType = Path.GetExtension(fileName);
-                Console.WriteLine(filType);
-                switch (filType)
+                CheckPrioList();
+                label1.Text = "";
+                label2.Text = "";
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files.Count() > 1)
+                    label1.Text = "Vennligst bare en fil av gangen... ;D";
+                else
                 {
-                    case ".json":
-                        label1.Text = "Converting " + fileName;
-                        
+                    fileName = files[0].ToString();
+
+                    string filType = Path.GetExtension(fileName);
+                    Console.WriteLine(filType);
+                    switch (filType)
+                    {
+                        case ".json":
+                            label1.Text = "Converting " + fileName;
+
                             jsonReader.ParseJson(fileName, priorities);
-                        
-                        break;
-                    case ".xml":
-                        label1.Text = "Converting " + fileName;
-                        converter.Convert(fileName);
-                        label2.Text = converter.schemaName + "\n" + converter.antTables;
-                        break;
+                            label2.Text = "Number of tables: " + jsonReader.tableCount;
+
+                            break;
+                        case ".xml":
+                            label1.Text = "Converting " + fileName;
+                            converter.Convert(fileName, includeTables.Checked);
+                            label2.Text = converter.schemaName + "\n" + converter.totalTableCount;
+                            break;
+                    }
+
+                    label1.Text = "Job complete!";
+
                 }
-
-                label1.Text = "Job complete!";
-
-            }
             }
             catch (Exception ex)
             {
-               // MessageBox.Show(ex.Message);
-                label1.Text = "Error: " + ex.Message;
+
+                MessageBox.Show(ex.Message);
+                label2.Text = "Error: " + ex.Message + "\n" + fileName;
+                KillExcel();
             }
             finally
             {
+
+                KillExcel();
+
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
@@ -174,8 +187,36 @@ namespace KDRS_Metadata
                 priorities.Remove(null);
             }
         }
+        //----------------------------------------------------------------------------------------------
 
+        private void KillExcel()
+        {
+            Process[] AllProcesses = Process.GetProcessesByName("excel");
 
+            // check to kill the right process
+            foreach (Process ExcelProcess in AllProcesses)
+            {
+                if (myHashtable.ContainsKey(ExcelProcess.Id) == false)
+                    ExcelProcess.Kill();
+            }
+
+            AllProcesses = null;
+        }
+        //----------------------------------------------------------------------------------------------
+
+        private void CheckExcellProcesses()
+        {
+            Process[] AllProcesses = Process.GetProcessesByName("excel");
+            myHashtable = new Hashtable();
+            int iCount = 0;
+
+            foreach (Process ExcelProcess in AllProcesses)
+            {
+                myHashtable.Add(ExcelProcess.Id, iCount);
+                iCount = iCount + 1;
+            }
+        }
+        //----------------------------------------------------------------------------------------------
 
 
         private void Form1_Load(object sender, EventArgs e)

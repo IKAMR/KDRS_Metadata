@@ -15,6 +15,7 @@ namespace KDRS_Metadata
     class JsonReader
 
     {
+        public int tableCount;
 
         public void ParseJson(string filename, List<string> priorities)
         {
@@ -57,7 +58,7 @@ namespace KDRS_Metadata
             {
                 Console.WriteLine(l);
             }
-
+            tableCount = 0;
             foreach (Table table in template.TemplateSchema.Tables)
             {
                 if (priorities.Contains(table.TablePriority))
@@ -70,6 +71,7 @@ namespace KDRS_Metadata
                     Marshal.ReleaseComObject(tableWorksheet);
 
                 }
+                tableCount++;
             }
 
             xlWorkBook.Sheets[1].Select();
@@ -102,12 +104,12 @@ namespace KDRS_Metadata
 
             List<string> columnNames = new List<string>()
             {
-                "Column",
-                "Name",
-                "Type",
-                "Folder",
-                "Description",
-                "Note"
+                "column",
+                "name",
+                "type",
+                "folder",
+                "description",
+                "note"
             };
 
             foreach (string name in columnNames)
@@ -177,11 +179,11 @@ namespace KDRS_Metadata
 
             List<string> columnNames = new List<string>()
             {
-                "Table",
-                "Folder",
-                "Schema",
-                "Rows",
-                "Priorities"
+                "table",
+                "folder",
+                "schema",
+                "rows",
+                "priorities"
             };
 
             foreach (string name in columnNames)
