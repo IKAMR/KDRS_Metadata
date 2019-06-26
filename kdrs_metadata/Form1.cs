@@ -13,7 +13,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
 
-namespace KDRS_Tools
+namespace KDRS_Metadata
 {
     public partial class Form1 : Form
     {

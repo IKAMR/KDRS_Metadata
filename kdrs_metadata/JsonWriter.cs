@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KDRS_Tools
+namespace KDRS_Metadata
 {
     class JsonWriter
     {

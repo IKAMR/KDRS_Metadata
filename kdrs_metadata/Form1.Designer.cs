@@ -1,4 +1,4 @@
-﻿namespace KDRS_Tools
+﻿namespace KDRS_Metadata
 {
     partial class Form1
     {
