@@ -39,9 +39,10 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.priorityDummy = new System.Windows.Forms.CheckBox();
             this.priorityStat = new System.Windows.Forms.CheckBox();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.includeTables = new System.Windows.Forms.CheckBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -154,7 +155,7 @@
             this.groupBox1.Controls.Add(this.prioritySystem);
             this.groupBox1.Controls.Add(this.priorityMedium);
             this.groupBox1.Controls.Add(this.priorityHigh);
-            this.groupBox1.Location = new System.Drawing.Point(4, 96);
+            this.groupBox1.Location = new System.Drawing.Point(11, 187);
             this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
@@ -189,17 +190,10 @@
             this.priorityStat.Text = "Stat";
             this.priorityStat.UseVisualStyleBackColor = true;
             // 
-            // panel1
-            // 
-            this.panel1.Location = new System.Drawing.Point(4, 23);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(580, 68);
-            this.panel1.TabIndex = 9;
-            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.includeTables);
-            this.groupBox2.Location = new System.Drawing.Point(296, 98);
+            this.groupBox2.Location = new System.Drawing.Point(303, 189);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(184, 91);
             this.groupBox2.TabIndex = 10;
@@ -218,18 +212,29 @@
             this.includeTables.Text = "Include tables";
             this.includeTables.UseVisualStyleBackColor = true;
             // 
+            // textBox1
+            // 
+            this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.textBox1.Location = new System.Drawing.Point(11, 64);
+            this.textBox1.Multiline = true;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.ReadOnly = true;
+            this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBox1.Size = new System.Drawing.Size(572, 52);
+            this.textBox1.TabIndex = 11;
+            // 
             // Form1
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(596, 219);
+            this.ClientSize = new System.Drawing.Size(596, 341);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.panel1);
             this.Name = "Form1";
             this.Text = "KDRS Tools";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -256,9 +261,10 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.CheckBox priorityDummy;
         private System.Windows.Forms.CheckBox priorityStat;
-        private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.CheckBox includeTables;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
     }
 }
 

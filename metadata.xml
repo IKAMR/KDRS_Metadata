@@ -96,6 +96,13 @@
                             <typeOriginal>varchar</typeOriginal>
                             <description/>
                         </column>
+                        <column>
+                            <name>EVALUERING</name>
+                            <lobFolder>schema1/table201/lob15</lobFolder>
+                            <type>CLOB</type>
+                            <typeOriginal>TEXT</typeOriginal>
+                            <nullable>true</nullable>
+                        </column>
                     </columns>
                     <primaryKey>
                         <name>PRIMARY</name>
@@ -348,7 +355,7 @@
                             <referencedTable>mappe</referencedTable>
                             <reference>
                                 <column>mappeID</column>
-                                <referenced>mappeID</referenced>
+                                <referenced>mappeID2</referenced>
                             </reference>
                             <deleteAction>RESTRICT</deleteAction>
                             <updateAction>RESTRICT</updateAction>
@@ -544,6 +551,16 @@
                     </candidateKeys>
                     <rows>9</rows>
                 </table>
+            </tables>
+        </schema>
+        <schema>
+            <name>testdb04_2</name>
+            <folder>schema1</folder>
+            <tables>
+                <table>
+                    <name>arkiv2</name>
+                    <folder>table0</folder>>
+                </table>     
             </tables>
         </schema>
     </schemas>

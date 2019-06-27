@@ -240,7 +240,7 @@ namespace KDRS_Metadata
                 "organizations",
                 "creationDate",
                 "templateVisibility",
-                "Table count"
+                "tableCount"
             };
 
             var prop = template.GetType().GetProperties();

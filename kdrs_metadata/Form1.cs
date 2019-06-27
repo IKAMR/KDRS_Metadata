@@ -17,12 +17,6 @@ using System.Xml.XPath;
 
 namespace KDRS_Metadata
 {
-    public static class Globals
-    {
-        public static readonly String toolName = "KDRS-Metadata";
-        public static readonly String toolVersion = "0.5";
-    }
-
     public partial class Form1 : Form
     {
         Microsoft.Office.Interop.Excel.Application xlApp;
@@ -71,58 +65,125 @@ namespace KDRS_Metadata
             CheckExcellProcesses();
             string fileName = "No file added";
 
-            try
-            {
+           // try
+           // {
                 CheckPrioList();
                 label1.Text = "";
                 label2.Text = "";
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files.Count() > 1)
-                    label1.Text = "Vennligst bare en fil av gangen... ;D";
-                else
+            if (files.Count() > 1)
+            {
+                label1.Text = "Vennligst bare en fil av gangen... ;D";
+            }
+            else
+            {
+                fileName = files[0].ToString();
+                Console.WriteLine(fileName);
+
+
+                backgroundWorker1 = new BackgroundWorker();
+                backgroundWorker1.DoWork += backgroundWorker1_DoWork;
+                backgroundWorker1.ProgressChanged += backgroundWorker1_ProgressChanged;
+                backgroundWorker1.RunWorkerCompleted += backgroundWorker1_RunWorkerCompleted;
+                backgroundWorker1.WorkerReportsProgress = true;
+                converter.OnProgressUpdate += converter_OnProgressUpdate;
+                backgroundWorker1.RunWorkerAsync(fileName);
+
+
+
+
+            }
+           // }
+           // catch (Exception ex)
+           // {
+           //     textBox1.Text = "Error: " + ex.Message + "\n" + fileName;
+           //     KillExcel();
+           // }
+           // finally
+           // {
+           //     KillExcel();
+           //
+           //     GC.Collect();
+           //     GC.WaitForPendingFinalizers();
+           //     GC.Collect();
+           //     GC.WaitForPendingFinalizers();
+           // }
+        }
+
+        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            //if (e.Error != null)
+            //{
+                label1.Text = "Job complete!";
+                textBox1.Text = e.Result as string;
+                KillExcel();
+           // }
+           // else
+           // {
+           //     textBox1.Text = "Error: " + e.Error.Message;
+           //     KillExcel();
+           // }
+        }
+
+        private void converter_OnProgressUpdate(int value)
+        {
+            base.Invoke((System.Action)delegate
+            {
+                textBox1.Text = "Tables handled: " + value;
+            });
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            label1.Text = "Converting " + e.UserState.ToString();
+        }
+
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        {
+            string fileName = e.Argument as string;
+             
+            string fileType = Path.GetExtension(fileName);
+            Console.WriteLine("FileType: " + fileType);
+
+            try
+            {
+                Console.WriteLine("Trying file: " + fileName + ", type: " + fileType);
+                switch (fileType)
                 {
-                    fileName = files[0].ToString();
+                    case ".json":
+                       // label1.Text = "Converting " + fileName;
 
-                    string filType = Path.GetExtension(fileName);
-                    Console.WriteLine(filType);
-                    switch (filType)
-                    {
-                        case ".json":
-                            label1.Text = "Converting " + fileName;
 
-                            jsonReader.ParseJson(fileName, priorities);
-                            label2.Text = "Number of tables: " + jsonReader.tableCount;
 
-                            break;
-                        case ".xml":
-                            label1.Text = "Converting " + fileName;
-                            converter.Convert(fileName, includeTables.Checked);
-                            label2.Text = converter.schemaName + "\n" + converter.totalTableCount;
-                            break;
-                    }
+                        jsonReader.ParseJson(fileName, priorities);
+                        label2.Text = "Number of tables: " + jsonReader.tableCount;
 
-                    label1.Text = "Job complete!";
+                        break;
+                    case ".xml":
+                        //label1.Text = "Converting " + fileName;
+                        Console.WriteLine("Converting " + fileName);
+                        backgroundWorker1.ReportProgress(0, fileName);
 
+                        converter.Convert(fileName, includeTables.Checked);
+                        string resultList = "";
+                        foreach (string schema in converter.schemaNames)
+                        {
+                            resultList += schema + "\r\n";
+                        }
+                       // textBox1.Text = resultList + "\r\n" + converter.totalTableCount;
+                       e.Result = resultList + "\r\n" + "Tables converted: " + converter.totalTableCount;
+                        break;
                 }
+                Console.WriteLine("Job complete!");
+                // label1.Text = "Job complete!";
+
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show(ex.Message);
-                label2.Text = "Error: " + ex.Message + "\n" + fileName;
-                KillExcel();
-            }
-            finally
-            {
-
-                KillExcel();
-
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                throw ex;
             }
         }
+
         //----------------------------------------------------------------------------------------------
 
         private void CheckPrioList()
@@ -225,61 +286,10 @@ namespace KDRS_Metadata
         }
         //----------------------------------------------------------------------------------------------
 
-
-        /*
-        public System.Data.DataTable CreateDataTableFromXml(string xmlFileName)
-        {
-            System.Data.DataTable Dt = new System.Data.DataTable();
-            try
-            {
-                DataSet ds = new DataSet();
-                ds.ReadXml(xmlFileName);
-                Dt.Load(ds.CreateDataReader());
-            }
-            catch(Exception ex)
-            {
-
-            }
-            return Dt;
-        }
-
-        private void ExportDataTableToExcel(System.Data.DataTable table, string xlFile)
-        {
-
-            Microsoft.Office.Interop.Excel.Application xlApp1 = new Microsoft.Office.Interop.Excel.Application();
-            Workbook xlWorkBook;
-            Worksheet xlWorkSheet;
-            object misValue = System.Reflection.Missing.Value;
-
-            xlWorkBook = xlApp1.Workbooks.Add(Type.Missing);
-
-            xlWorkSheet = (Worksheet)xlWorkBook.ActiveSheet;
-            xlWorkSheet.Name = table.TableName;
-
-            for (int i=1; i<table.Columns.Count+1; i++)
-            {
-                xlWorkSheet.Cells[i, 1] = table.Columns[i - 1].ColumnName;
-            }
-
-            for (int j=0; j<table.Rows.Count; j++)
-            {
-                for (int k=0; k<table.Columns.Count; k++)
-                {
-                    xlWorkSheet.Cells[k + 1, j + 2] = table.Rows[j].ItemArray[k].ToString();
-                }
-            }
-
-            MessageBox.Show("Saving " + xlFile);
-
-            xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(xlFile), ".xls"), XlFileFormat.xlWorkbookNormal);
-
-            xlWorkBook.Close(true, misValue, misValue);
-            xlApp1.Quit();
-
-            Marshal.ReleaseComObject(xlWorkSheet);
-            Marshal.ReleaseComObject(xlWorkBook);
-            Marshal.ReleaseComObject(xlApp1);
-            
-        }*/
+    }
+    public static class Globals
+    {
+        public static readonly String toolName = "KDRS-Metadata";
+        public static readonly String toolVersion = "0.5";
     }
 }
