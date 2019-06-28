@@ -15,16 +15,18 @@ namespace KDRS_Metadata
 {
     class DataConverter
     {
-        public int totalTableCount;
+        public int tableCount;
         public List<string> schemaNames = new List<string>();
+        public string excelFileName;
 
-        public delegate void ProgressUpdate(int count);
+        public delegate void ProgressUpdate(int count, int totalCount);
         public event ProgressUpdate OnProgressUpdate;
 
 
         public void Convert(string filename, bool includeTables)
         {
 
+            schemaNames.Clear();
 
             Application xlApp1 = new Application();
             Workbooks xlWorkbooks = xlApp1.Workbooks;
@@ -54,11 +56,12 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(DBWorkSheet);
 
             XmlNodeList schemas = root.SelectNodes("descendant::siard:schema", nsmgr);
-            //XmlNode tables = root.SelectSingleNode("//siard:tables", nsmgr);
+            XmlNodeList allTables = root.SelectNodes("//siard:tables/siard:table", nsmgr);
 
             Console.WriteLine("Schemas read");
 
-            totalTableCount = 0;
+            tableCount = 0;
+            int totalTableCount = allTables.Count;
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, schemas, nsmgr);
@@ -80,10 +83,10 @@ namespace KDRS_Metadata
                         Worksheet tableWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
 
                         AddTable(tableWorksheet, table, nsmgr);
-                        totalTableCount++;
+                        tableCount++;
                         Console.WriteLine("Added table");
 
-                        OnProgressUpdate?.Invoke(totalTableCount);
+                        OnProgressUpdate?.Invoke(tableCount, totalTableCount);
                     }
                 }
             }
@@ -92,17 +95,17 @@ namespace KDRS_Metadata
 
             xlWorkBook.Sheets[1].Select();
 
-            string excelFileName;
+            //string excelFileName;
             if (includeTables)
             {
-                string origName = Path.GetFileNameWithoutExtension(filename);
-                string folder = Directory.GetParent(Path.GetFullPath(filename)).ToString();
-                excelFileName = Path.Combine(folder, origName + "_tables.xlsx");
-                Console.WriteLine(excelFileName);
+                excelFileName = Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx");
             }
             else
             {
-                excelFileName = Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx");
+                string origName = Path.GetFileNameWithoutExtension(filename);
+                string folder = Directory.GetParent(Path.GetFullPath(filename)).ToString();
+                excelFileName = Path.Combine(folder, origName + "_table_list.xlsx");
+                Console.WriteLine(excelFileName);
             }
 
             xlWorkBook.SaveAs(excelFileName);
@@ -120,7 +123,7 @@ namespace KDRS_Metadata
         // Creates a worksheet with information about the database.
         private void AddDBInfo(Worksheet DBWorkSheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
-            DBWorkSheet.Name = "DB";
+            DBWorkSheet.Name = "db";
 
             List<string> fieldNames = new List<string>()
             {
@@ -268,13 +271,12 @@ namespace KDRS_Metadata
 
             Hyperlinks links = tableWorksheet.Hyperlinks;
 
-            links.Add(linkCell, "", "DB!A1", "", "<<< home");
+            links.Add(linkCell, "", "tables!A1", "", "column <<< tables");
 
-            int cellCount = 3;
+            int cellCount = 2;
 
             List<string> columnNames = new List<string>()
             {
-                "column",
                 "name",
                 "type",
                 "type original",
@@ -298,13 +300,23 @@ namespace KDRS_Metadata
             string primaryKey_name = getNodeText(table["primaryKey"], "descendant::siard:name", nsmgr);
             string primaryKey_column = getNodeText(table["primaryKey"], "descendant::siard:column", nsmgr);
 
-            string[][] rowNamesArray = new string[10][] {
+            string tableRows = getInnerText(table["rows"]);
+
+            string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
+            if (tableRows == "0")
+                tablePriority = "[EMPTY]";
+
+            string tableEntity = getNodeText(table, "descendant::siard:entity", nsmgr);
+
+            string[][] rowNamesArray = new string[12][] {
                 new string[2] { "schemaName", table.ParentNode.ParentNode["name"].InnerText.ToString() },
                 new string[2] { "schemaFolder", table.ParentNode.ParentNode["folder"].InnerText.ToString()},
                 new string[2] { "tableName", table["name"].InnerText.ToString() },
                 new string[2] { "tableFolder", getInnerText(table["folder"]) },
                 new string[2] { "tableDescription", table_description },
-                new string[2] { "rows", getInnerText(table["rows"]) },
+                new string[2] { "tablePriority", tablePriority },
+                new string[2] { "tableEntity", tableEntity },
+                new string[2] { "rows", tableRows },
                 new string[2] { "columns", getChildCount(table["columns"]) },
                 new string[2] { "pkName", primaryKey_name },
                 new string[2] { "pkColumn", primaryKey_column },
@@ -407,7 +419,7 @@ namespace KDRS_Metadata
             // Finds all columns in table and prints info to Excel.
             XmlNode tableColumns = table.SelectSingleNode("descendant::siard:columns", nsmgr);
 
-            int column_count = 0;
+            int column_count = 1;
             if (tableColumns != null)
             {
                 foreach (XmlNode column in tableColumns.ChildNodes)
@@ -440,6 +452,7 @@ namespace KDRS_Metadata
                 }
             }
 
+            tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
             Marshal.ReleaseComObject(tableWorksheet);
         }
@@ -493,7 +506,7 @@ namespace KDRS_Metadata
         // Creates a worksheet with table overview
         private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr)
         {
-            tableOverviewWorksheet.Name = "Tables";
+            tableOverviewWorksheet.Name = "tables";
 
            // XmlNode tables = schemas.SelectSingleNode("descendant::siard:table");
 

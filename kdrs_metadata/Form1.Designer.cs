@@ -207,9 +207,9 @@
             this.includeTables.CheckState = System.Windows.Forms.CheckState.Checked;
             this.includeTables.Location = new System.Drawing.Point(7, 15);
             this.includeTables.Name = "includeTables";
-            this.includeTables.Size = new System.Drawing.Size(92, 17);
+            this.includeTables.Size = new System.Drawing.Size(129, 17);
             this.includeTables.TabIndex = 0;
-            this.includeTables.Text = "Include tables";
+            this.includeTables.Text = "Include table columns";
             this.includeTables.UseVisualStyleBackColor = true;
             // 
             // textBox1
@@ -220,7 +220,7 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox1.Size = new System.Drawing.Size(572, 52);
+            this.textBox1.Size = new System.Drawing.Size(572, 69);
             this.textBox1.TabIndex = 11;
             // 
             // Form1
@@ -236,7 +236,7 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Name = "Form1";
-            this.Text = "KDRS Tools";
+            this.Text = "KDRS Metadata";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
             this.groupBox1.ResumeLayout(false);

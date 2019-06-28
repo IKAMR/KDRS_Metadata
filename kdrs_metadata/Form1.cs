@@ -28,6 +28,8 @@ namespace KDRS_Metadata
 
         Hashtable myHashtable;
 
+        List<string> resultList = new List<string>();
+
         public Form1()
         {
             InitializeComponent();
@@ -65,12 +67,12 @@ namespace KDRS_Metadata
             CheckExcellProcesses();
             string fileName = "No file added";
 
-           // try
-           // {
-                CheckPrioList();
-                label1.Text = "";
-                label2.Text = "";
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            CheckPrioList();
+            label1.Text = "";
+            label2.Text = "";
+            textBox1.Clear();
+            resultList.Clear();
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
             if (files.Count() > 1)
             {
                 label1.Text = "Vennligst bare en fil av gangen... ;D";
@@ -89,47 +91,33 @@ namespace KDRS_Metadata
                 converter.OnProgressUpdate += converter_OnProgressUpdate;
                 backgroundWorker1.RunWorkerAsync(fileName);
 
-
-
-
             }
-           // }
-           // catch (Exception ex)
-           // {
-           //     textBox1.Text = "Error: " + ex.Message + "\n" + fileName;
-           //     KillExcel();
-           // }
-           // finally
-           // {
-           //     KillExcel();
-           //
-           //     GC.Collect();
-           //     GC.WaitForPendingFinalizers();
-           //     GC.Collect();
-           //     GC.WaitForPendingFinalizers();
-           // }
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            //if (e.Error != null)
-            //{
-                label1.Text = "Job complete!";
-                textBox1.Text = e.Result as string;
+            if (e.Error != null)
+            {
+                textBox1.Text = "Error: " + e.Error.Message;
                 KillExcel();
-           // }
-           // else
-           // {
-           //     textBox1.Text = "Error: " + e.Error.Message;
-           //     KillExcel();
-           // }
+            }
+            else
+            {
+                label1.Text = "Job complete!";
+                textBox1.Text = "";
+                foreach (string l in (List<string>)e.Result)
+                {
+                    textBox1.AppendText("\r\n" + l);
+                }
+                KillExcel();
+            }
         }
 
-        private void converter_OnProgressUpdate(int value)
+        private void converter_OnProgressUpdate(int value, int total)
         {
             base.Invoke((System.Action)delegate
             {
-                textBox1.Text = "Tables handled: " + value;
+                textBox1.Text = "Tables handled: " + value + " of " + total;
             });
         }
 
@@ -141,9 +129,10 @@ namespace KDRS_Metadata
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             string fileName = e.Argument as string;
-             
+
             string fileType = Path.GetExtension(fileName);
             Console.WriteLine("FileType: " + fileType);
+
 
             try
             {
@@ -151,37 +140,45 @@ namespace KDRS_Metadata
                 switch (fileType)
                 {
                     case ".json":
-                       // label1.Text = "Converting " + fileName;
 
-
-
+                        backgroundWorker1.ReportProgress(0, fileName);
+                        resultList.Add("Source: " + fileName);
                         jsonReader.ParseJson(fileName, priorities);
                         label2.Text = "Number of tables: " + jsonReader.tableCount;
 
                         break;
                     case ".xml":
-                        //label1.Text = "Converting " + fileName;
-                        Console.WriteLine("Converting " + fileName);
+
                         backgroundWorker1.ReportProgress(0, fileName);
+                        resultList.Add("Source: " + fileName);
 
                         converter.Convert(fileName, includeTables.Checked);
-                        string resultList = "";
+
+                        resultList.Add("Target file: " + converter.excelFileName);
+                        resultList.Add("Tables converted: " + converter.tableCount);
+
                         foreach (string schema in converter.schemaNames)
                         {
-                            resultList += schema + "\r\n";
+                            resultList.Add(schema);
                         }
-                       // textBox1.Text = resultList + "\r\n" + converter.totalTableCount;
-                       e.Result = resultList + "\r\n" + "Tables converted: " + converter.totalTableCount;
+
+                        e.Result = resultList;
                         break;
                 }
                 Console.WriteLine("Job complete!");
                 // label1.Text = "Job complete!";
 
             }
+            catch (COMException)
+            {
+                throw new Exception("Please close file: " + converter.excelFileName);
+            }
             catch (Exception ex)
             {
+                Console.WriteLine("Error: " + ex.Message);
                 throw ex;
             }
+
         }
 
         //----------------------------------------------------------------------------------------------
@@ -290,6 +287,6 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS-Metadata";
-        public static readonly String toolVersion = "0.5";
+        public static readonly String toolVersion = "0.6";
     }
 }
