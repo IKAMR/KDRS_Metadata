@@ -1,14 +1,9 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms.VisualStyles;
 using System.Xml;
 
 namespace KDRS_Metadata
@@ -38,7 +33,6 @@ namespace KDRS_Metadata
             var nameSpace = xmldoc.DocumentElement.NamespaceURI;
 
             nsmgr.AddNamespace("siard", nameSpace);
-            //nsmgr.AddNamespace("siard", "http://www.bar.admin.ch/xmlns/siard/2.0/metadata.xsd");
 
             Workbook xlWorkBook;
 
@@ -49,7 +43,6 @@ namespace KDRS_Metadata
             xlWorkBook = xlWorkbooks.Add(misValue);
 
             xlWorkSheets = xlWorkBook.Sheets;
-
 
             Worksheet DBWorkSheet = xlWorkSheets.get_Item(1);
             AddDBInfo(DBWorkSheet, root, nsmgr);
@@ -75,7 +68,6 @@ namespace KDRS_Metadata
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
                 Console.WriteLine("Enter schema");
 
-
                 if (includeTables)
                 {
                     foreach (XmlNode table in tables.ChildNodes)
@@ -91,11 +83,8 @@ namespace KDRS_Metadata
                 }
             }
 
-            //antTables = "Number of tables " + tables.ChildNodes.Count.ToString();
-
             xlWorkBook.Sheets[1].Select();
 
-            //string excelFileName;
             if (includeTables)
             {
                 excelFileName = Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx");
@@ -238,7 +227,6 @@ namespace KDRS_Metadata
             for (int i=1; i<schemas.Count; i++)
             {
                 schemasList += ", " + getNodeText(schemas[i], "descendant::siard:folder", nsmgr);
-                
             }
             DBWorkSheet.Cells[cnt, 2] = schemasList;
             cnt++;
@@ -454,6 +442,7 @@ namespace KDRS_Metadata
 
             tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
+
             Marshal.ReleaseComObject(tableWorksheet);
         }
 
@@ -569,7 +558,9 @@ namespace KDRS_Metadata
                 }
             }
 
+            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
+
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

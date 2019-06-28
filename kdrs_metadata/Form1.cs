@@ -1,19 +1,12 @@
-﻿using Microsoft.Office.Interop.Excel;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml;
-using System.Xml.XPath;
 
 namespace KDRS_Metadata
 {
@@ -82,7 +75,6 @@ namespace KDRS_Metadata
                 fileName = files[0].ToString();
                 Console.WriteLine(fileName);
 
-
                 backgroundWorker1 = new BackgroundWorker();
                 backgroundWorker1.DoWork += backgroundWorker1_DoWork;
                 backgroundWorker1.ProgressChanged += backgroundWorker1_ProgressChanged;
@@ -90,7 +82,6 @@ namespace KDRS_Metadata
                 backgroundWorker1.WorkerReportsProgress = true;
                 converter.OnProgressUpdate += converter_OnProgressUpdate;
                 backgroundWorker1.RunWorkerAsync(fileName);
-
             }
         }
 
@@ -133,7 +124,6 @@ namespace KDRS_Metadata
             string fileType = Path.GetExtension(fileName);
             Console.WriteLine("FileType: " + fileType);
 
-
             try
             {
                 Console.WriteLine("Trying file: " + fileName + ", type: " + fileType);
@@ -165,9 +155,6 @@ namespace KDRS_Metadata
                         e.Result = resultList;
                         break;
                 }
-                Console.WriteLine("Job complete!");
-                // label1.Text = "Job complete!";
-
             }
             catch (COMException)
             {
@@ -175,7 +162,6 @@ namespace KDRS_Metadata
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
                 throw ex;
             }
 
@@ -189,7 +175,6 @@ namespace KDRS_Metadata
             if (priorityHigh.Checked)
             {
                 priorities.Add("HIGH");
-                Console.WriteLine("High checked");
             }
             else if (!priorityHigh.Checked)
             {
@@ -275,7 +260,6 @@ namespace KDRS_Metadata
             }
         }
         //----------------------------------------------------------------------------------------------
-
 
         private void Form1_Load(object sender, EventArgs e)
         {
