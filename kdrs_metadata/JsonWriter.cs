@@ -8,12 +8,12 @@ namespace KDRS_Metadata
 {
     class JsonWriter
     {
-        Template newTemplate = new Template
-        {
-            Name = "templateName",
-            TemplateSchema = new Schema {
-                Name = "schemaName"
-            }
-        };
+       // Template newTemplate = new Template
+       // {
+       //     Name = "templateName",
+       //     //TemplateSchema = new Schema {
+       //         Name = "schemaName"
+       //     }
+       // };
     }
 }

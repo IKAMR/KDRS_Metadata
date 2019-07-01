@@ -10,8 +10,8 @@ namespace KDRS_Metadata
 {
     class DataConverter
     {
-        public int tableCount;
-        public List<string> schemaNames = new List<string>();
+        public int totalTableCount;
+        public List<Schema> schemaNames = new List<Schema>();
         public string excelFileName;
 
         public delegate void ProgressUpdate(int count, int totalCount);
@@ -53,8 +53,8 @@ namespace KDRS_Metadata
 
             Console.WriteLine("Schemas read");
 
-            tableCount = 0;
-            int totalTableCount = allTables.Count;
+            int tableCount = 0;
+            totalTableCount = allTables.Count;
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, schemas, nsmgr);
@@ -64,7 +64,7 @@ namespace KDRS_Metadata
 
             foreach (XmlNode schema in schemas)
             {
-                schemaNames.Add(getInnerText(schema["name"]));
+                schemaNames.Add(new Schema(getInnerText(schema["name"]),getInnerText(schema["folder"])));
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
                 Console.WriteLine("Enter schema");
 
@@ -233,12 +233,23 @@ namespace KDRS_Metadata
 
             DBWorkSheet.Cells[cnt, 1] = "users";
             XmlNode users = table.SelectSingleNode("//siard:users", nsmgr);
+            DBWorkSheet.Cells[cnt, 2] = getChildCount(users);
+            cnt++;
 
-            foreach (XmlNode user in users.ChildNodes)
+            /*foreach (XmlNode user in users.ChildNodes)
             {
                 DBWorkSheet.Cells[cnt, 2] = getNodeText(user, "descendant::siard:name", nsmgr);
                 cnt++;
-            }
+            }*/
+
+            DBWorkSheet.Cells[cnt, 1] = "roles";
+            XmlNode roles = table.SelectSingleNode("//siard:roles", nsmgr);
+            DBWorkSheet.Cells[cnt, 2] = getChildCount(roles);
+            cnt++;
+
+            DBWorkSheet.Cells[cnt, 1] = "privileges";
+            XmlNode privileges = table.SelectSingleNode("//siard:privileges", nsmgr);
+            DBWorkSheet.Cells[cnt, 2] = getChildCount(privileges);
 
             DBWorkSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
 
@@ -265,19 +276,20 @@ namespace KDRS_Metadata
 
             List<string> columnNames = new List<string>()
             {
+                "column",
                 "name",
                 "type",
-                "type original",
+                "typeOriginal",
                 "nullable",
-                "default value",
+                "defaultValue",
                 "lobFolder",
                 "description",
                 "note"
             };
 
-            foreach (string name in columnNames)
+            foreach (string name in columnNames.Skip(1))
             {
-                tableWorksheet.Cells[2, columnNames.IndexOf(name) + 1] = name;
+                tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
             }
             //------------------------------------------------------------------------
 
@@ -440,6 +452,10 @@ namespace KDRS_Metadata
                 }
             }
 
+            Range range = tableWorksheet.Cells[5, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
             tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
 
@@ -528,6 +544,8 @@ namespace KDRS_Metadata
             foreach (XmlNode schema in schemas)
             {
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
+                string schemaNumber = GetNumbers(schema["folder"].InnerText);
+
 
                 foreach (XmlNode table in tables.ChildNodes)
                 {
@@ -540,15 +558,19 @@ namespace KDRS_Metadata
 
                     Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
 
-                    links.Add(linkCell, "", folder + "!A1", "", name);
+                    links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
 
                     tableOverviewWorksheet.Cells[count, 2] = getInnerText(table["folder"]);
                     tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
+
                     string tableRows = getInnerText(table["rows"]);
+                    tableOverviewWorksheet.Cells[count, 4] = tableRows;
+                    
+                    string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
                     if (tableRows == "")
-                        tableOverviewWorksheet.Cells[count, 4] = "[EMPTY]";
+                        tableOverviewWorksheet.Cells[count, 5] = "[EMPTY]";
                     else
-                        tableOverviewWorksheet.Cells[count, 4] = tableRows;
+                        tableOverviewWorksheet.Cells[count, 5] = tablePriority;
                     count++;
 
                     Marshal.ReleaseComObject(c1);

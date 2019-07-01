@@ -134,7 +134,7 @@ namespace KDRS_Metadata
                         backgroundWorker1.ReportProgress(0, fileName);
                         resultList.Add("Source: " + fileName);
                         jsonReader.ParseJson(fileName, priorities);
-                        label2.Text = "Number of tables: " + jsonReader.tableCount;
+                        resultList.Add("Tables: " + jsonReader.tableCount);
 
                         break;
                     case ".xml":
@@ -144,24 +144,27 @@ namespace KDRS_Metadata
 
                         converter.Convert(fileName, includeTables.Checked);
 
-                        resultList.Add("Target file: " + converter.excelFileName);
-                        resultList.Add("Tables converted: " + converter.tableCount);
+                        resultList.Add("Target: " + converter.excelFileName);
+                        resultList.Add("Tables: " + converter.totalTableCount);
 
-                        foreach (string schema in converter.schemaNames)
+                        foreach (Schema schema in converter.schemaNames)
                         {
-                            resultList.Add(schema);
+                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
                         }
 
-                        e.Result = resultList;
+                        
                         break;
                 }
+                e.Result = resultList;
             }
-            catch (COMException)
+            catch (COMException ex)
             {
+                Console.WriteLine("ComExeption: " + ex);
                 throw new Exception("Please close file: " + converter.excelFileName);
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Exeption: " + ex);
                 throw ex;
             }
 

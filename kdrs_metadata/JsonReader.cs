@@ -316,6 +316,12 @@ namespace KDRS_Metadata
 
     public class Schema
     {
+        public Schema(string name, string folder)
+        {
+            Name = name;
+            Folder = folder;
+        }
+
         public List<Table> Tables { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
