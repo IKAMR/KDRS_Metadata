@@ -12,6 +12,8 @@
 
 *.xls
 *.xlsx
+*.xml
+*.json
 
 # Build results
 [Dd]ebug/
