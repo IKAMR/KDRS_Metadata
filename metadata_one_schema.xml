@@ -553,16 +553,6 @@
                 </table>
             </tables>
         </schema>
-        <schema>
-            <name>testdb04_2</name>
-            <folder>schema1</folder>
-            <tables>
-                <table>
-                    <name>arkiv2</name>
-                    <folder>table0</folder>>
-                </table>     
-            </tables>
-        </schema>
     </schemas>
     <users>
         <user>

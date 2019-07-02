@@ -23,12 +23,16 @@ namespace KDRS_Metadata
 
         List<string> resultList = new List<string>();
 
+        
+
         public Form1()
         {
             InitializeComponent();
             this.AllowDrop = true;
             this.DragDrop += new DragEventHandler(Form1_DragDrop);
             this.DragEnter += new DragEventHandler(Form1_DragEnter);
+
+            //textBox1.AutoSize = true;
 
             xlApp = new Microsoft.Office.Interop.Excel.Application();
             if (xlApp == null)
@@ -62,7 +66,6 @@ namespace KDRS_Metadata
 
             CheckPrioList();
             label1.Text = "";
-            label2.Text = "";
             textBox1.Clear();
             resultList.Clear();
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);

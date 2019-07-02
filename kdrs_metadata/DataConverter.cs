@@ -11,6 +11,7 @@ namespace KDRS_Metadata
     class DataConverter
     {
         public int totalTableCount;
+        public int totalSchemaCount;
         public List<Schema> schemaNames = new List<Schema>();
         public string excelFileName;
 
@@ -49,6 +50,7 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(DBWorkSheet);
 
             XmlNodeList schemas = root.SelectNodes("descendant::siard:schema", nsmgr);
+            totalSchemaCount = schemas.Count;
             XmlNodeList allTables = root.SelectNodes("//siard:tables/siard:table", nsmgr);
 
             Console.WriteLine("Schemas read");
@@ -57,7 +59,7 @@ namespace KDRS_Metadata
             totalTableCount = allTables.Count;
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
-            AddTableOverview(tableOverviewWorksheet, schemas, nsmgr);
+            AddTableOverview(tableOverviewWorksheet, schemas, nsmgr, includeTables);
             Marshal.ReleaseComObject(tableOverviewWorksheet);
 
             Console.WriteLine("Added tableoverview");
@@ -93,7 +95,7 @@ namespace KDRS_Metadata
             {
                 string origName = Path.GetFileNameWithoutExtension(filename);
                 string folder = Directory.GetParent(Path.GetFullPath(filename)).ToString();
-                excelFileName = Path.Combine(folder, origName + "_table_list.xlsx");
+                excelFileName = Path.Combine(folder, origName + "_tablelist.xlsx");
                 Console.WriteLine(excelFileName);
             }
 
@@ -262,7 +264,11 @@ namespace KDRS_Metadata
         private void AddTable(Worksheet tableWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
             string schemaNumber = GetNumbers(table.ParentNode.ParentNode["folder"].InnerText);
-            tableWorksheet.Name = schemaNumber + "." + GetNumbers(table["folder"].InnerText);
+
+            if (totalSchemaCount < 2)
+                tableWorksheet.Name = GetNumbers(table["folder"].InnerText);
+            else 
+                tableWorksheet.Name = schemaNumber + "." + GetNumbers(table["folder"].InnerText);
 
             Range c1 = tableWorksheet.Cells[1, 1];
             Range c2 = tableWorksheet.Cells[1, 1];
@@ -509,7 +515,7 @@ namespace KDRS_Metadata
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Creates a worksheet with table overview
-        private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr)
+        private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr, bool includeTables)
         {
             tableOverviewWorksheet.Name = "tables";
 
@@ -551,15 +557,26 @@ namespace KDRS_Metadata
                 {
                     string name = table["name"].InnerText;
                     string folder = GetNumbers(table["folder"].InnerText);
+                    if (includeTables)
+                    {
+                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
+                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
+                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
 
-                    Range c1 = tableOverviewWorksheet.Cells[count, 1];
-                    Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                    Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
+                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
 
-                    Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+                        links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
 
-                    links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
 
+                        Marshal.ReleaseComObject(c1);
+                        Marshal.ReleaseComObject(c2);
+                        Marshal.ReleaseComObject(linkCell);
+                        Marshal.ReleaseComObject(links);
+                    }
+                    else
+                    {
+                        tableOverviewWorksheet.Cells[count, 1] = name;
+                    }
                     tableOverviewWorksheet.Cells[count, 2] = getInnerText(table["folder"]);
                     tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
 
@@ -567,16 +584,12 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 4] = tableRows;
                     
                     string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
-                    if (tableRows == "")
+                    if (tableRows == "0")
                         tableOverviewWorksheet.Cells[count, 5] = "[EMPTY]";
                     else
                         tableOverviewWorksheet.Cells[count, 5] = tablePriority;
                     count++;
 
-                    Marshal.ReleaseComObject(c1);
-                    Marshal.ReleaseComObject(c2);
-                    Marshal.ReleaseComObject(linkCell);
-                    Marshal.ReleaseComObject(links);
                 }
             }
 
