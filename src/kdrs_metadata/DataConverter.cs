@@ -319,9 +319,9 @@ namespace KDRS_Metadata
                 new string[2] { "schemaFolder", table.ParentNode.ParentNode["folder"].InnerText.ToString()},
                 new string[2] { "tableName", table["name"].InnerText.ToString() },
                 new string[2] { "tableFolder", getInnerText(table["folder"]) },
-                new string[2] { "tableDescription", table_description },
                 new string[2] { "tablePriority", tablePriority },
                 new string[2] { "tableEntity", tableEntity },
+                new string[2] { "tableDescription", table_description },
                 new string[2] { "rows", tableRows },
                 new string[2] { "columns", getChildCount(table["columns"]) },
                 new string[2] { "pkName", primaryKey_name },
@@ -552,7 +552,6 @@ namespace KDRS_Metadata
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
                 string schemaNumber = GetNumbers(schema["folder"].InnerText);
 
-
                 foreach (XmlNode table in tables.ChildNodes)
                 {
                     string name = table["name"].InnerText;
@@ -566,7 +565,6 @@ namespace KDRS_Metadata
                         Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
 
                         links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
-
 
                         Marshal.ReleaseComObject(c1);
                         Marshal.ReleaseComObject(c2);

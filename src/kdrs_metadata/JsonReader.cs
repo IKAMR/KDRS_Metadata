@@ -9,16 +9,23 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace KDRS_Metadata
 {
     class JsonReader
 
     {
+        public int totalTableCount;
         public int tableCount;
 
-        public void ParseJson(string filename, List<string> priorities)
+        public bool includeTables;
+
+        public delegate void ProgressUpdate(int count, int totalCount);
+        public event ProgressUpdate OnProgressUpdate;
+
+        public void ParseJson(string filename, List<string> priorities, bool includeTables)
         {
+
+            this.includeTables = includeTables;
 
             Microsoft.Office.Interop.Excel.Application xlApp1 = new Microsoft.Office.Interop.Excel.Application();
 
@@ -58,22 +65,29 @@ namespace KDRS_Metadata
             {
                 Console.WriteLine(l);
             }
+
             tableCount = 0;
-            foreach (Table table in template.TemplateSchema.Tables)
+            totalTableCount = template.TemplateSchema.Tables.Count;
+
+            if (includeTables)
             {
-                if (priorities.Contains(table.TablePriority))
+                foreach (Table table in template.TemplateSchema.Tables)
                 {
+                    if (priorities.Contains(table.TablePriority))
+                    {
 
-                    Worksheet tableWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+                        Worksheet tableWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
 
-                    AddTable(tableWorksheet, template.TemplateSchema, table);
+                        AddTable(tableWorksheet, template.TemplateSchema, table);
 
-                    Marshal.ReleaseComObject(tableWorksheet);
+                        Marshal.ReleaseComObject(tableWorksheet);
 
+                    }
+                    tableCount++;
+
+                    OnProgressUpdate?.Invoke(tableCount, totalTableCount);
                 }
-                tableCount++;
             }
-
             xlWorkBook.Sheets[1].Select();
 
             xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx"));
@@ -86,7 +100,7 @@ namespace KDRS_Metadata
             xlWorkBook = null;
 
             xlApp1.Quit();
-            
+
             Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp1);
 
@@ -100,7 +114,17 @@ namespace KDRS_Metadata
         private void AddTable(Worksheet tableWorksheet, Schema schema, Table table)
         {
 
-            tableWorksheet.Name = table.Name;
+            tableWorksheet.Name = GetNumbers(table.Folder);
+
+            Range c1 = tableWorksheet.Cells[1, 1];
+            Range c2 = tableWorksheet.Cells[1, 1];
+            Range linkCell = tableWorksheet.get_Range(c1, c2);
+
+            Hyperlinks links = tableWorksheet.Hyperlinks;
+
+            links.Add(linkCell, "", "tables!A1", "", "column <<< tables");
+
+            //tableWorksheet.Name = table.Name;
 
             List<string> columnNames = new List<string>()
             {
@@ -112,17 +136,18 @@ namespace KDRS_Metadata
                 "note"
             };
 
-            foreach (string name in columnNames)
+            foreach (string name in columnNames.Skip(1))
             {
                 tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
             }
             //-------------------------------------------------------------------
-            string[][] rowNamesArray = new string[8][] {
+            string[][] rowNamesArray = new string[9][] {
                 new string[2] { "schemaName", schema.Name },
                 new string[2] { "schemaFolder", schema.Folder},
                 new string[2] { "tableName", table.Name },
                 new string[2] { "tableFolder", table.Folder },
                 new string[2] { "tablePriority", table.TablePriority },
+                new string[2] { "tableEntity", table.TableEntity },
                 new string[2] { "tableDescription", table.Description },
                 new string[2] { "rows", table.Rows.ToString() },
                 new string[2] { "columns", table.Columns.Count().ToString() },
@@ -167,7 +192,13 @@ namespace KDRS_Metadata
                 columnCount++;
             }
 
+            Range range = tableWorksheet.Cells[5, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
+            tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
+
             Marshal.ReleaseComObject(tableWorksheet);
         }
 
@@ -175,7 +206,7 @@ namespace KDRS_Metadata
 
         private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
         {
-            tableOverviewWorksheet.Name = "Tables";
+            tableOverviewWorksheet.Name = "tables";
 
             List<string> columnNames = new List<string>()
             {
@@ -183,7 +214,11 @@ namespace KDRS_Metadata
                 "folder",
                 "schema",
                 "rows",
-                "priorities"
+                "priority",
+                "pri-sort",
+                "entity",
+                "description",
+                "note"
             };
 
             foreach (string name in columnNames)
@@ -194,20 +229,25 @@ namespace KDRS_Metadata
             int count = 2;
             foreach (Table table in schema.Tables)
             {
-                if (priorities.Contains(table.TablePriority))
+
+                if (priorities.Contains(table.TablePriority) && includeTables)
                 {
                     Range c1 = tableOverviewWorksheet.Cells[count, 1];
                     Range c2 = tableOverviewWorksheet.Cells[count, 1];
                     Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
 
                     Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
-                    links.Add(linkCell, "", table.Name + "!A1", "", table.Name);
+                    links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
 
                     //tableOverviewWorksheet.Cells[count, 1] = table.Name;
                     tableOverviewWorksheet.Cells[count, 2] = table.Folder;
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
                     tableOverviewWorksheet.Cells[count, 5] = table.TablePriority;
+                    tableOverviewWorksheet.Cells[count, 6] = "";
+                    tableOverviewWorksheet.Cells[count, 7] = table.TableEntity;
+                    tableOverviewWorksheet.Cells[count, 8] = table.Description;
+                    tableOverviewWorksheet.Cells[count, 9] = "";
 
                     count++;
 
@@ -218,7 +258,9 @@ namespace KDRS_Metadata
                 }
             }
 
+            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
+
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
         //*************************************************************************
@@ -226,10 +268,48 @@ namespace KDRS_Metadata
         // Creates a worksheet with information about the template.
         private void AddTemplateInfo(Worksheet templateSheet, Template template)
         {
-            templateSheet.Name = "Template";
+            templateSheet.Name = "db";
 
+            /*
+            "toolName",
+                "toolVersion",
+                "systemSupplier",
+                "systemId",
+                "systemName",
+                "systemVersion",
+                "systemInstance",
+                "tableCount",
+                "",
+                "SIARD",
+                "version",
+                "dbname",
+                "description",
+                "archiver",
+                "archiverContact",
+                "dataOwner",
+                "dataOriginTimespan",
+                "lobFolder",
+                "producerApplication",
+                "archivalDate",
+                "digestType",
+                "digest",
+                "clientMachine",
+                "databaseProduct",
+                "connection",
+                "databaseUser",
+                "schemas"
+                */
             List<string> fieldNames = new List<string>()
             {
+                "toolVersion",
+                "systemSupplier",
+                "systemId",
+                "systemName",
+                "systemVersion",
+                "systemInstance",
+                "tableCount",
+                "",
+                "Decom JSON",
                 "modelVersion",
                 "uuid",
                 "name",
@@ -239,8 +319,7 @@ namespace KDRS_Metadata
                 "creator",
                 "organizations",
                 "creationDate",
-                "templateVisibility",
-                "tableCount"
+                "templateVisibility"
             };
 
             var prop = template.GetType().GetProperties();
@@ -265,15 +344,34 @@ namespace KDRS_Metadata
 
             var date = new DateTime(1970, 1, 1, 0, 0, 0).AddMilliseconds(creationDate).ToLocalTime();
 
-            templateSheet.Cells[1, 2] = template.ModelVersion;
-            templateSheet.Cells[2, 2] = template.Uuid;
-            templateSheet.Cells[3, 2] = template.Name;
-            templateSheet.Cells[4, 2] = template.Description;
-            templateSheet.Cells[5, 2] = template.SystemName;
-            templateSheet.Cells[6, 2] = template.SystemVersion;
-            templateSheet.Cells[7, 2] = template.Creator;
+            // toolname
+            templateSheet.Cells[1, 2] = Globals.toolName;
 
-            int count2 = 8;
+            // toolVersion
+            templateSheet.Cells[2, 2] = Globals.toolVersion;
+
+            templateSheet.Cells[3, 2] = "";
+            templateSheet.Cells[4, 2] = "";
+            templateSheet.Cells[5, 2] = "";
+            templateSheet.Cells[6, 2] = "";
+            templateSheet.Cells[7, 2] = "";
+
+            //tableCount
+            templateSheet.Cells[7, 2] = template.TemplateSchema.Tables.Count.ToString();
+
+            templateSheet.Cells[8, 2] = "";
+
+            templateSheet.Cells[9, 2] = "";
+
+            templateSheet.Cells[10, 2] = template.ModelVersion;
+            templateSheet.Cells[11, 2] = template.Uuid;
+            templateSheet.Cells[12, 2] = template.Name;
+            templateSheet.Cells[13, 2] = template.Description;
+            templateSheet.Cells[14, 2] = template.SystemName;
+            templateSheet.Cells[15, 2] = template.SystemVersion;
+            templateSheet.Cells[16, 2] = template.Creator;
+
+            int count2 = 17;
             if (template.Organizations != null)
             {
                 foreach (string org in template.Organizations)
@@ -290,13 +388,21 @@ namespace KDRS_Metadata
 
             templateSheet.Cells[count2, 2] = date;
             templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
-            templateSheet.Cells[count2 + 2, 2] = template.TemplateSchema.Tables.Count.ToString();
 
+            templateSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             templateSheet.Columns.AutoFit();
 
             Marshal.ReleaseComObject(templateSheet);
         }
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        private static string GetNumbers(string input)
+        {
+            return new string(input.Where(c => char.IsDigit(c)).ToArray());
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     }
+
     //====================================================================================
 
     public class Template
@@ -332,6 +438,7 @@ namespace KDRS_Metadata
     {
         public string Name { get; set; }
         public string TablePriority { get; set; }
+        public string TableEntity { get; set; }
         public string Folder { get; set; }
         public int Rows { get; set; }
         public string Description { get; set; }
