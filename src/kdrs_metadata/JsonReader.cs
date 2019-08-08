@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace KDRS_Metadata
@@ -15,6 +16,7 @@ namespace KDRS_Metadata
 
     {
         public int totalTableCount;
+        public string excelFileName;
         public int tableCount;
 
         public bool includeTables;
@@ -90,21 +92,31 @@ namespace KDRS_Metadata
             }
             xlWorkBook.Sheets[1].Select();
 
-            xlWorkBook.SaveAs(Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx"));
+
+            if (includeTables)
+            {
+                excelFileName = Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx");
+            }
+            else
+            {
+                string origName = Path.GetFileNameWithoutExtension(filename);
+                string folder = Directory.GetParent(Path.GetFullPath(filename)).ToString();
+                excelFileName = Path.Combine(folder, origName + "_tablelist.xlsx");
+                Console.WriteLine(excelFileName);
+            }
+
+            xlWorkBook.SaveAs(excelFileName);
 
             Marshal.ReleaseComObject(xlWorkSheets);
 
             xlWorkBook.Close(true, misValue, misValue);
             Marshal.ReleaseComObject(xlWorkBook);
 
-            xlWorkBook = null;
-
             xlApp1.Quit();
 
             Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp1);
 
-            xlApp1 = null;
             Console.WriteLine("App: " + xlApp1);
         }
 
@@ -132,6 +144,7 @@ namespace KDRS_Metadata
                 "name",
                 "type",
                 "folder",
+                "entity",
                 "description",
                 "note"
             };
@@ -182,11 +195,15 @@ namespace KDRS_Metadata
             int columnCount = 0;
             foreach (Column column in table.Columns)
             {
+                GetEntity(column.Description, null, column);
+
                 tableWorksheet.Cells[count, 1] = "Column " + columnCount;
                 tableWorksheet.Cells[count, 2] = column.Name;
                 tableWorksheet.Cells[count, 3] = column.Datatype;
                 tableWorksheet.Cells[count, 4] = column.Folder;
-                tableWorksheet.Cells[count, 5] = column.Description;
+                tableWorksheet.Cells[count, 5] = column.Entity;
+                tableWorksheet.Cells[count, 6] = column.Description;
+                tableWorksheet.Cells[count, 7] = "";
                 count++;
 
                 columnCount++;
@@ -203,7 +220,8 @@ namespace KDRS_Metadata
         }
 
         //*************************************************************************
-
+        
+        // Creates a worksheet with table overview
         private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
         {
             tableOverviewWorksheet.Name = "tables";
@@ -214,6 +232,7 @@ namespace KDRS_Metadata
                 "folder",
                 "schema",
                 "rows",
+                "columns",
                 "priority",
                 "pri-sort",
                 "entity",
@@ -229,6 +248,10 @@ namespace KDRS_Metadata
             int count = 2;
             foreach (Table table in schema.Tables)
             {
+                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+                GetEntity(table.Description, table);
+                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+
 
                 if (priorities.Contains(table.TablePriority) && includeTables)
                 {
@@ -243,11 +266,12 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 2] = table.Folder;
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
-                    tableOverviewWorksheet.Cells[count, 5] = table.TablePriority;
-                    tableOverviewWorksheet.Cells[count, 6] = "";
-                    tableOverviewWorksheet.Cells[count, 7] = table.TableEntity;
-                    tableOverviewWorksheet.Cells[count, 8] = table.Description;
-                    tableOverviewWorksheet.Cells[count, 9] = "";
+                    tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
+                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
+                    tableOverviewWorksheet.Cells[count, 7] = "";
+                    tableOverviewWorksheet.Cells[count, 8] = table.TableEntity;
+                    tableOverviewWorksheet.Cells[count, 9] = table.Description;
+                    tableOverviewWorksheet.Cells[count, 10] = "";
 
                     count++;
 
@@ -401,6 +425,47 @@ namespace KDRS_Metadata
             return new string(input.Where(c => char.IsDigit(c)).ToArray());
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        private void GetEntity(string description, Table table = null, Column column = null)
+        {
+            Regex regex = new Regex(@"(?<entity1>(?<=\{)[^\{\}]+(?=\}))|(?<entity2>(?<=\[)[^\[\]]+(?=\]))|(?<desc>\w+)");
+
+            if (description != null)
+            {
+                string entities = "";
+                string cleanDescription = "";
+
+                foreach (Match m in regex.Matches(description))
+                {
+                    if (m.Groups["entity1"].Value != "")
+                    {
+                        entities += "{" + m.Groups["entity1"].Value + "}";
+                    }
+
+                    if (m.Groups["entity2"].Value != "")
+                    {
+                        entities += "[" + m.Groups["entity2"].Value + "]";
+                    }
+
+                    if (m.Groups["desc"].Value != "")
+                    {
+                        cleanDescription += m.Groups["desc"].Value;
+                    }
+                }
+
+                if (table != null)
+                    table.TableEntity = entities;
+                else if (column != null) 
+                    column.Entity = entities;
+
+                if (entities != "")
+                {
+                    if (table != null)
+                        table.Description = cleanDescription;
+                    else if (column != null)
+                        column.Description = cleanDescription;
+                }
+            }
+        }
     }
 
     //====================================================================================
@@ -452,6 +517,8 @@ namespace KDRS_Metadata
         public string Description { get; set; }
         public string Folder { get; set; }
         public string Datatype { get; set; }
+        public string Entity { get; set; }
+        public string Note { get; set; }
     }
 
     public class PrimaryKey

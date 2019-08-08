@@ -473,7 +473,7 @@ namespace KDRS_Metadata
         // Returns Innertext of node found in table with query.
         private string getNodeText(XmlNode table, string query, XmlNamespaceManager nsmgr)
         {
-            string varName = "[NA]";
+            string varName = "[EMPTY]";
             if (table != null)
             {
                 XmlNode node = table.SelectSingleNode(query, nsmgr);
@@ -491,7 +491,7 @@ namespace KDRS_Metadata
         // Returns Innertext of node.
         private string getInnerText(XmlNode table)
         {
-            string varName = "[NA]";
+            string varName = "[EMPTY]";
             if (table != null)
             {
                 varName = table.InnerText;
@@ -505,7 +505,7 @@ namespace KDRS_Metadata
         // Returns children count of node.
         private string getChildCount(XmlNode table)
         {
-            string varName = "[NA]";
+            string varName = "0";
             if (table != null)
             {
                 varName = table.ChildNodes.Count.ToString();
@@ -527,6 +527,7 @@ namespace KDRS_Metadata
                 "folder",
                 "schema",
                 "rows",
+                "columns",
                 "priority",
                 "entity",
                 "description",
@@ -580,12 +581,15 @@ namespace KDRS_Metadata
 
                     string tableRows = getInnerText(table["rows"]);
                     tableOverviewWorksheet.Cells[count, 4] = tableRows;
-                    
+
+                    string tableColumns = getChildCount(table["columns"]);
+                    tableOverviewWorksheet.Cells[count, 5] = tableColumns;
+
                     string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
                     if (tableRows == "0")
-                        tableOverviewWorksheet.Cells[count, 5] = "[EMPTY]";
+                        tableOverviewWorksheet.Cells[count, 6] = "[EMPTY]";
                     else
-                        tableOverviewWorksheet.Cells[count, 5] = tablePriority;
+                        tableOverviewWorksheet.Cells[count, 6] = tablePriority;
                     count++;
 
                 }

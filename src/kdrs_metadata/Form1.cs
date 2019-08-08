@@ -139,6 +139,8 @@ namespace KDRS_Metadata
                         jsonReader.OnProgressUpdate += reader_OnProgressUpdate;
 
                         jsonReader.ParseJson(fileName, priorities, includeTables.Checked);
+
+                        resultList.Add("Target: " + jsonReader.excelFileName);
                         resultList.Add("Tables: " + jsonReader.tableCount);
 
                         break;
