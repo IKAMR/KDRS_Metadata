@@ -319,9 +319,9 @@ namespace KDRS_Metadata
                 new string[2] { "schemaFolder", table.ParentNode.ParentNode["folder"].InnerText.ToString()},
                 new string[2] { "tableName", table["name"].InnerText.ToString() },
                 new string[2] { "tableFolder", getInnerText(table["folder"]) },
-                new string[2] { "tableDescription", table_description },
                 new string[2] { "tablePriority", tablePriority },
                 new string[2] { "tableEntity", tableEntity },
+                new string[2] { "tableDescription", table_description },
                 new string[2] { "rows", tableRows },
                 new string[2] { "columns", getChildCount(table["columns"]) },
                 new string[2] { "pkName", primaryKey_name },
@@ -473,7 +473,7 @@ namespace KDRS_Metadata
         // Returns Innertext of node found in table with query.
         private string getNodeText(XmlNode table, string query, XmlNamespaceManager nsmgr)
         {
-            string varName = "[NA]";
+            string varName = "[EMPTY]";
             if (table != null)
             {
                 XmlNode node = table.SelectSingleNode(query, nsmgr);
@@ -491,7 +491,7 @@ namespace KDRS_Metadata
         // Returns Innertext of node.
         private string getInnerText(XmlNode table)
         {
-            string varName = "[NA]";
+            string varName = "[EMPTY]";
             if (table != null)
             {
                 varName = table.InnerText;
@@ -505,7 +505,7 @@ namespace KDRS_Metadata
         // Returns children count of node.
         private string getChildCount(XmlNode table)
         {
-            string varName = "[NA]";
+            string varName = "0";
             if (table != null)
             {
                 varName = table.ChildNodes.Count.ToString();
@@ -527,6 +527,7 @@ namespace KDRS_Metadata
                 "folder",
                 "schema",
                 "rows",
+                "columns",
                 "priority",
                 "entity",
                 "description",
@@ -552,7 +553,6 @@ namespace KDRS_Metadata
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
                 string schemaNumber = GetNumbers(schema["folder"].InnerText);
 
-
                 foreach (XmlNode table in tables.ChildNodes)
                 {
                     string name = table["name"].InnerText;
@@ -566,7 +566,6 @@ namespace KDRS_Metadata
                         Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
 
                         links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
-
 
                         Marshal.ReleaseComObject(c1);
                         Marshal.ReleaseComObject(c2);
@@ -582,12 +581,15 @@ namespace KDRS_Metadata
 
                     string tableRows = getInnerText(table["rows"]);
                     tableOverviewWorksheet.Cells[count, 4] = tableRows;
-                    
+
+                    string tableColumns = getChildCount(table["columns"]);
+                    tableOverviewWorksheet.Cells[count, 5] = tableColumns;
+
                     string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
                     if (tableRows == "0")
-                        tableOverviewWorksheet.Cells[count, 5] = "[EMPTY]";
+                        tableOverviewWorksheet.Cells[count, 6] = "[EMPTY]";
                     else
-                        tableOverviewWorksheet.Cells[count, 5] = tablePriority;
+                        tableOverviewWorksheet.Cells[count, 6] = tablePriority;
                     count++;
 
                 }

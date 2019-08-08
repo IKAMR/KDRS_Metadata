@@ -15,14 +15,14 @@
     "folder" : "schema0",
     "tables" : [ {
       "name" : "admindel",
-      "description" : null,
+      "description" : "[SYSTEM]",
       "folder" : "table0",
       "rows" : 116,
       "done" : false,
       "tablePriority" : "HIGH",
       "columns" : [ {
         "name" : "AI_ID",
-        "description" : "tabell 1 beskr 1",
+        "description" : "{n4:ID} tabell 1 beskr 1",
         "folder" : null,
         "dataType" : "BIGINT"
       }, {
@@ -88,7 +88,7 @@
       "candidateKeys" : [ ]
     }, {
       "name" : "adradmenh",
-      "description" : "Siste tabell",
+      "description" : "{n4:ADMIN}{test} Siste tabell",
       "folder" : "table2",
       "rows" : 98,
       "done" : false,

@@ -83,7 +83,6 @@ namespace KDRS_Metadata
                 backgroundWorker1.ProgressChanged += backgroundWorker1_ProgressChanged;
                 backgroundWorker1.RunWorkerCompleted += backgroundWorker1_RunWorkerCompleted;
                 backgroundWorker1.WorkerReportsProgress = true;
-                converter.OnProgressUpdate += converter_OnProgressUpdate;
                 backgroundWorker1.RunWorkerAsync(fileName);
             }
         }
@@ -107,7 +106,7 @@ namespace KDRS_Metadata
             }
         }
 
-        private void converter_OnProgressUpdate(int value, int total)
+        private void reader_OnProgressUpdate(int value, int total)
         {
             base.Invoke((System.Action)delegate
             {
@@ -136,7 +135,12 @@ namespace KDRS_Metadata
 
                         backgroundWorker1.ReportProgress(0, fileName);
                         resultList.Add("Source: " + fileName);
-                        jsonReader.ParseJson(fileName, priorities);
+
+                        jsonReader.OnProgressUpdate += reader_OnProgressUpdate;
+
+                        jsonReader.ParseJson(fileName, priorities, includeTables.Checked);
+
+                        resultList.Add("Target: " + jsonReader.excelFileName);
                         resultList.Add("Tables: " + jsonReader.tableCount);
 
                         break;
@@ -144,6 +148,8 @@ namespace KDRS_Metadata
 
                         backgroundWorker1.ReportProgress(0, fileName);
                         resultList.Add("Source: " + fileName);
+
+                        converter.OnProgressUpdate += reader_OnProgressUpdate;
 
                         converter.Convert(fileName, includeTables.Checked);
 
@@ -277,6 +283,6 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS-Metadata";
-        public static readonly String toolVersion = "0.6";
+        public static readonly String toolVersion = "0.7";
     }
 }
