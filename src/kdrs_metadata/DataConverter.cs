@@ -565,7 +565,10 @@ namespace KDRS_Metadata
 
                         Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
 
-                        links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
+                        if (totalSchemaCount < 2)
+                            links.Add(linkCell, "", folder + "!A1", "", name);
+                        else
+                            links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
 
                         Marshal.ReleaseComObject(c1);
                         Marshal.ReleaseComObject(c2);
