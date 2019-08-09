@@ -259,7 +259,6 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(DBWorkSheet);
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
         // Creates a worksheet with information for each table
         private void AddTable(Worksheet tableWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
@@ -298,7 +297,6 @@ namespace KDRS_Metadata
                 tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
             }
             //------------------------------------------------------------------------
-
             // Finds the metadata for each table and prints to Excel.
 
             string table_description = getNodeText(table, "descendant::siard:description", nsmgr);
@@ -310,7 +308,7 @@ namespace KDRS_Metadata
 
             string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
             if (tableRows == "0")
-                tablePriority = "[EMPTY]";
+                tablePriority = "EMPTY";
 
             string tableEntity = getNodeText(table, "descendant::siard:entity", nsmgr);
 
@@ -392,7 +390,6 @@ namespace KDRS_Metadata
                     cellCount++;
                 }
             }
-
             //-------------------------------------------------------------------------------------
             // Finds all candidate keys in table and prints to Excel.
             XmlNode candidateKeys = table.SelectSingleNode("descendant::siard:candidateKeys", nsmgr);
@@ -420,7 +417,6 @@ namespace KDRS_Metadata
                     }
                 }
             }
-
             //-------------------------------------------------------------------------------------
             // Finds all columns in table and prints info to Excel.
             XmlNode tableColumns = table.SelectSingleNode("descendant::siard:columns", nsmgr);
@@ -467,20 +463,19 @@ namespace KDRS_Metadata
 
             Marshal.ReleaseComObject(tableWorksheet);
         }
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Returns Innertext of node found in table with query.
         private string getNodeText(XmlNode table, string query, XmlNamespaceManager nsmgr)
         {
-            string varName = "[EMPTY]";
+            string varName = "[NA]";
             if (table != null)
             {
                 XmlNode node = table.SelectSingleNode(query, nsmgr);
                 if (node != null)
                 {
                     varName = node.InnerText;
-                    if (varName == "")
+                    if (varName == "" && query != "descendant::siard:entity" && query != "descendant::siard:description")
                         varName = "[EMPTY]";
                 }
             }
@@ -491,7 +486,7 @@ namespace KDRS_Metadata
         // Returns Innertext of node.
         private string getInnerText(XmlNode table)
         {
-            string varName = "[EMPTY]";
+            string varName = "[NA]";
             if (table != null)
             {
                 varName = table.InnerText;
@@ -513,7 +508,6 @@ namespace KDRS_Metadata
             return varName;
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
         // Creates a worksheet with table overview
         private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr, bool includeTables)
         {
@@ -590,13 +584,16 @@ namespace KDRS_Metadata
 
                     string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
                     if (tableRows == "0")
-                        tableOverviewWorksheet.Cells[count, 6] = "[EMPTY]";
+                        tableOverviewWorksheet.Cells[count, 6] = "EMPTY";
                     else
                         tableOverviewWorksheet.Cells[count, 6] = tablePriority;
                     count++;
-
                 }
             }
+
+            Range range = tableOverviewWorksheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
 
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();

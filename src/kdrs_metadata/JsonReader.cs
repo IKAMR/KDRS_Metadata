@@ -413,6 +413,10 @@ namespace KDRS_Metadata
             templateSheet.Cells[count2, 2] = date;
             templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
 
+            Range range = templateSheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
             templateSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             templateSheet.Columns.AutoFit();
 

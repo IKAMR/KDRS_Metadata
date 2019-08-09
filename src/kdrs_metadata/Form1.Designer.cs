@@ -42,6 +42,8 @@
             this.includeTables = new System.Windows.Forms.CheckBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.btnCopyLog = new System.Windows.Forms.Button();
+            this.btnSaveLog = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -219,12 +221,36 @@
             this.textBox1.Size = new System.Drawing.Size(572, 99);
             this.textBox1.TabIndex = 11;
             // 
+            // btnCopyLog
+            // 
+            this.btnCopyLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnCopyLog.Location = new System.Drawing.Point(13, 286);
+            this.btnCopyLog.Name = "btnCopyLog";
+            this.btnCopyLog.Size = new System.Drawing.Size(87, 27);
+            this.btnCopyLog.TabIndex = 12;
+            this.btnCopyLog.Text = "Copy log";
+            this.btnCopyLog.UseVisualStyleBackColor = true;
+            this.btnCopyLog.Click += new System.EventHandler(this.btnCopyLog_Click);
+            // 
+            // btnSaveLog
+            // 
+            this.btnSaveLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnSaveLog.Location = new System.Drawing.Point(106, 286);
+            this.btnSaveLog.Name = "btnSaveLog";
+            this.btnSaveLog.Size = new System.Drawing.Size(87, 27);
+            this.btnSaveLog.TabIndex = 13;
+            this.btnSaveLog.Text = "Save log";
+            this.btnSaveLog.UseVisualStyleBackColor = true;
+            this.btnSaveLog.Click += new System.EventHandler(this.btnSaveLog_Click);
+            // 
             // Form1
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(596, 341);
+            this.Controls.Add(this.btnSaveLog);
+            this.Controls.Add(this.btnCopyLog);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -259,6 +285,8 @@
         private System.Windows.Forms.CheckBox includeTables;
         private System.Windows.Forms.TextBox textBox1;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Windows.Forms.Button btnCopyLog;
+        private System.Windows.Forms.Button btnSaveLog;
     }
 }
 
