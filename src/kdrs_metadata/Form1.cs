@@ -186,6 +186,8 @@ namespace KDRS_Metadata
 
         private void CheckPrioList()
         {
+            priorities.Clear();
+
             //"HIGH", "MEDIUM", "LOW", "SYSTEM", "EMPTY", null
             if (priorityHigh.Checked)
             {

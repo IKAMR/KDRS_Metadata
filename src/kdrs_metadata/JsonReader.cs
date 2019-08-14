@@ -170,16 +170,16 @@ namespace KDRS_Metadata
 
             foreach (string[] rn in rowNamesArray)
             {
-                if (rn[0] == "tableDescription")
+                /*if (rn[0] == "tableDescription")
                 {
                     tableWorksheet.Cells[count, 1] = rn;
                     tableWorksheet.Cells[count, 3] = rn[1];
                 }
                 else
-                {
+                {*/
                     tableWorksheet.Cells[count, 1] = rn;
                     tableWorksheet.Cells[count, 2] = rn[1];
-                }
+               // }
 
                 count++;
             }
