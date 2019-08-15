@@ -109,7 +109,21 @@
         "columns" : [ "AA_ADMID_AI", "AA_ADRID_AK" ],
         "description" : null
       },
-      "foreignKeys" : [ ],
+      "foreignKeys" : [{
+        "name" : "FK_ENHET_AREA_1",
+        "columns" : [ "AREAID" ],
+        "description" : "{keyForeign} Fremmednokkel - omrade",
+        "referencedSchema" : "IST",
+        "referencedTable" : "AREA",
+        "referencedColumns" : [ "AREAID" ]
+      }, {
+        "name" : "FK_ENHET_DRIFTSFORM_1",
+        "columns" : [ "DRIFTSFORM" ],
+        "description" : "{keyForeign} Fremmednokkel - driftsform",
+        "referencedSchema" : "IST",
+        "referencedTable" : "DRIFTSFORM",
+        "referencedColumns" : [ "KOD" ]
+      } ],
       "candidateKeys" : [ ]
     } ]
   }

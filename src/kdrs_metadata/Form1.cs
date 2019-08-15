@@ -65,7 +65,6 @@ namespace KDRS_Metadata
             CheckExcellProcesses();
             string fileName = "No file added";
 
-            CheckPrioList();
             label1.Text = "";
             textBox1.Clear();
             resultList.Clear();
@@ -124,6 +123,9 @@ namespace KDRS_Metadata
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+
+            CheckPrioList();
+            
             string fileName = e.Argument as string;
 
             string fileType = Path.GetExtension(fileName);
@@ -145,6 +147,11 @@ namespace KDRS_Metadata
 
                         resultList.Add("Target: " + jsonReader.excelFileName);
                         resultList.Add("Tables: " + jsonReader.tableCount);
+
+                        foreach (Schema schema in jsonReader.schemaNames)
+                        {
+                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
+                        }
 
                         break;
                     case ".xml":

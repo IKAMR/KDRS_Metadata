@@ -19,6 +19,8 @@ namespace KDRS_Metadata
         public string excelFileName;
         public int tableCount;
 
+        public List<Schema> schemaNames = new List<Schema>();
+
         public bool includeTables;
 
         public delegate void ProgressUpdate(int count, int totalCount);
@@ -26,12 +28,15 @@ namespace KDRS_Metadata
 
         public void ParseJson(string filename, List<string> priorities, bool includeTables)
         {
+            schemaNames.Clear();
 
             this.includeTables = includeTables;
 
-            Microsoft.Office.Interop.Excel.Application xlApp1 = new Microsoft.Office.Interop.Excel.Application();
-
-            //xlApp1.Visible = true;
+            Application xlApp1 = new Application
+            {
+                DecimalSeparator = ".",
+                UseSystemSeparators = false
+            };
 
             Workbooks xlWorkBooks;
             Workbook xlWorkBook;
@@ -55,12 +60,14 @@ namespace KDRS_Metadata
             Template template = JsonConvert.DeserializeObject<Template>(json);
 
             Worksheet templateSheet = xlWorkSheets.get_Item(1);
-            AddTemplateInfo(templateSheet, template);
+            AddDBInfo(templateSheet, template);
             Marshal.ReleaseComObject(templateSheet);
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, template.TemplateSchema, priorities);
             Marshal.ReleaseComObject(tableOverviewWorksheet);
+
+            schemaNames.Add(template.TemplateSchema);
 
             Console.WriteLine("After");
             foreach (string l in priorities)
@@ -83,7 +90,6 @@ namespace KDRS_Metadata
                         AddTable(tableWorksheet, template.TemplateSchema, table);
 
                         Marshal.ReleaseComObject(tableWorksheet);
-
                     }
                     tableCount++;
 
@@ -91,7 +97,6 @@ namespace KDRS_Metadata
                 }
             }
             xlWorkBook.Sheets[1].Select();
-
 
             if (includeTables)
             {
@@ -116,8 +121,6 @@ namespace KDRS_Metadata
 
             Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp1);
-
-            Console.WriteLine("App: " + xlApp1);
         }
 
         //*************************************************************************
@@ -143,6 +146,7 @@ namespace KDRS_Metadata
                 "column",
                 "name",
                 "type",
+                "nullable",
                 "folder",
                 "entity",
                 "description",
@@ -170,40 +174,111 @@ namespace KDRS_Metadata
 
             foreach (string[] rn in rowNamesArray)
             {
-                /*if (rn[0] == "tableDescription")
-                {
-                    tableWorksheet.Cells[count, 1] = rn;
-                    tableWorksheet.Cells[count, 3] = rn[1];
-                }
-                else
-                {*/
-                    tableWorksheet.Cells[count, 1] = rn;
-                    tableWorksheet.Cells[count, 2] = rn[1];
-               // }
-
+                tableWorksheet.Cells[count, 1] = rn;
+                tableWorksheet.Cells[count, 2] = rn[1];
                 count++;
             }
 
+            // Primary keys
             if (table.PrimaryKey != null)
             {
                 tableWorksheet.Cells[count, 1] = "pkName";
                 tableWorksheet.Cells[count, 2] = table.PrimaryKey.Name;
+                count++;
+
+                foreach (string column in table.PrimaryKey.Columns)
+                {
+                    tableWorksheet.Cells[count, 1] = "pkColumn";
+                    tableWorksheet.Cells[count, 2] = column;
+                    count++;
+                }
+
+                tableWorksheet.Cells[count, 1] = "pkDescription";
                 tableWorksheet.Cells[count, 2] = table.PrimaryKey.Description;
                 count++;
             }
 
-            int columnCount = 0;
+            // Foreign keys
+            if (table.ForeignKeys != null)
+            {
+                foreach (ForeignKey fkey in table.ForeignKeys)
+                {
+                    tableWorksheet.Cells[count, 1] = "fkName";
+                    tableWorksheet.Cells[count, 2] = fkey.Name;
+                    count++;
+
+                    foreach (string column in fkey.Columns)
+                    {
+                        tableWorksheet.Cells[count, 1] = "fkColumn";
+                        tableWorksheet.Cells[count, 2] = column;
+                        count++;
+                    }
+
+                    tableWorksheet.Cells[count, 1] = "fkRefSchema";
+                    tableWorksheet.Cells[count, 2] = fkey.ReferencedSchema;
+                    count++;
+
+                    tableWorksheet.Cells[count, 1] = "fkRefTable";
+                    tableWorksheet.Cells[count, 2] = fkey.ReferencedTable;
+                    count++;
+
+                    foreach (string column in fkey.ReferencedColumns)
+                    {
+                        tableWorksheet.Cells[count, 1] = "fkReferencedColumns";
+                        tableWorksheet.Cells[count, 2] = column;
+                        count++;
+                    }
+
+                    tableWorksheet.Cells[count, 1] = "fkDescription";
+                    tableWorksheet.Cells[count, 2] = fkey.Description;
+                    count++;
+
+                    tableWorksheet.Cells[count, 1] = "fkDeleteAction";
+                    tableWorksheet.Cells[count, 2] = fkey.DeleteAction;
+                    count++;
+
+                    tableWorksheet.Cells[count, 1] = "fkUpdateAction";
+                    tableWorksheet.Cells[count, 2] = fkey.UpdateAction;
+                    count++;
+                }
+            }
+
+            // Candidate keys
+            if (table.CandidateKeys != null)
+            {
+                foreach (CandidateKey ckey in table.CandidateKeys)
+                {
+                    tableWorksheet.Cells[count, 1] = "ckName";
+                    tableWorksheet.Cells[count, 2] = ckey.Name;
+                    count++;
+
+                    foreach (string column in ckey.Columns)
+                    {
+                        tableWorksheet.Cells[count, 1] = "ckColumn";
+                        tableWorksheet.Cells[count, 2] = column;
+                        count++;
+                    }
+
+                    tableWorksheet.Cells[count, 1] = "ckDescription";
+                    tableWorksheet.Cells[count, 2] = ckey.Description;
+                    count++;
+                }
+            }
+
+            // Columns
+            int columnCount = 1;
             foreach (Column column in table.Columns)
             {
                 GetEntity(column.Description, null, column);
 
-                tableWorksheet.Cells[count, 1] = "Column " + columnCount;
+                tableWorksheet.Cells[count, 1] = columnCount;
                 tableWorksheet.Cells[count, 2] = column.Name;
                 tableWorksheet.Cells[count, 3] = column.Datatype;
-                tableWorksheet.Cells[count, 4] = column.Folder;
-                tableWorksheet.Cells[count, 5] = column.Entity;
-                tableWorksheet.Cells[count, 6] = column.Description;
-                tableWorksheet.Cells[count, 7] = "";
+                tableWorksheet.Cells[count, 4] = column.Nullable;
+                tableWorksheet.Cells[count, 5] = column.Folder;
+                tableWorksheet.Cells[count, 6] = column.Entity;
+                tableWorksheet.Cells[count, 7] = column.Description;
+                tableWorksheet.Cells[count, 8] = "";
                 count++;
 
                 columnCount++;
@@ -220,7 +295,7 @@ namespace KDRS_Metadata
         }
 
         //*************************************************************************
-        
+
         // Creates a worksheet with table overview
         private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
         {
@@ -252,17 +327,27 @@ namespace KDRS_Metadata
                 GetEntity(table.Description, table);
                 Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
 
-
-                if (priorities.Contains(table.TablePriority) && includeTables)
+                if (priorities.Contains(table.TablePriority))
                 {
-                    Range c1 = tableOverviewWorksheet.Cells[count, 1];
-                    Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                    Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
+                    if (includeTables)
+                    {
+                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
+                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
+                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
 
-                    Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
-                    links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
+                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+                        links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
 
-                    //tableOverviewWorksheet.Cells[count, 1] = table.Name;
+                        Marshal.ReleaseComObject(c1);
+                        Marshal.ReleaseComObject(c2);
+                        Marshal.ReleaseComObject(linkCell);
+                        Marshal.ReleaseComObject(links);
+                    }
+                    else
+                    {
+                        tableOverviewWorksheet.Cells[count, 1] = table.Name;
+                    }
+
                     tableOverviewWorksheet.Cells[count, 2] = table.Folder;
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
@@ -274,13 +359,12 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 10] = "";
 
                     count++;
-
-                    Marshal.ReleaseComObject(c1);
-                    Marshal.ReleaseComObject(c2);
-                    Marshal.ReleaseComObject(linkCell);
-                    Marshal.ReleaseComObject(links);
                 }
             }
+
+            Range range = tableOverviewWorksheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
 
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
@@ -290,41 +374,13 @@ namespace KDRS_Metadata
         //*************************************************************************
 
         // Creates a worksheet with information about the template.
-        private void AddTemplateInfo(Worksheet templateSheet, Template template)
+        private void AddDBInfo(Worksheet DBWorkSheet, Template template)
         {
-            templateSheet.Name = "db";
+            DBWorkSheet.Name = "db";
 
-            /*
-            "toolName",
-                "toolVersion",
-                "systemSupplier",
-                "systemId",
-                "systemName",
-                "systemVersion",
-                "systemInstance",
-                "tableCount",
-                "",
-                "SIARD",
-                "version",
-                "dbname",
-                "description",
-                "archiver",
-                "archiverContact",
-                "dataOwner",
-                "dataOriginTimespan",
-                "lobFolder",
-                "producerApplication",
-                "archivalDate",
-                "digestType",
-                "digest",
-                "clientMachine",
-                "databaseProduct",
-                "connection",
-                "databaseUser",
-                "schemas"
-                */
             List<string> fieldNames = new List<string>()
             {
+                "toolname",
                 "toolVersion",
                 "systemSupplier",
                 "systemId",
@@ -351,14 +407,14 @@ namespace KDRS_Metadata
             int count = 1;
             foreach (string s in fieldNames)
             {
-                templateSheet.Cells[count, 1] = s;
+                DBWorkSheet.Cells[count, 1] = s;
                 count++;
 
                 if (s == "organizations" && template.Organizations != null && template.Organizations.Count > 1)
                 {
                     for (int i = 1; i < template.Organizations.Count; i++)
                     {
-                        templateSheet.Cells[count, 1] = null;
+                        DBWorkSheet.Cells[count, 1] = null;
                         count++;
                     }
                 }
@@ -369,58 +425,54 @@ namespace KDRS_Metadata
             var date = new DateTime(1970, 1, 1, 0, 0, 0).AddMilliseconds(creationDate).ToLocalTime();
 
             // toolname
-            templateSheet.Cells[1, 2] = Globals.toolName;
+            DBWorkSheet.Cells[1, 2] = Globals.toolName;
 
             // toolVersion
-            templateSheet.Cells[2, 2] = Globals.toolVersion;
+            DBWorkSheet.Cells[2, 2] = Globals.toolVersion;
 
-            templateSheet.Cells[3, 2] = "";
-            templateSheet.Cells[4, 2] = "";
-            templateSheet.Cells[5, 2] = "";
-            templateSheet.Cells[6, 2] = "";
-            templateSheet.Cells[7, 2] = "";
+            DBWorkSheet.Cells[3, 2] = "";
+            DBWorkSheet.Cells[4, 2] = "";
+            DBWorkSheet.Cells[5, 2] = template.SystemName;
+            DBWorkSheet.Cells[6, 2] = template.SystemVersion;
+            DBWorkSheet.Cells[7, 2] = "";
 
             //tableCount
-            templateSheet.Cells[7, 2] = template.TemplateSchema.Tables.Count.ToString();
+            DBWorkSheet.Cells[8, 2] = template.TemplateSchema.Tables.Count.ToString();
 
-            templateSheet.Cells[8, 2] = "";
+            DBWorkSheet.Cells[9, 2] = "";
 
-            templateSheet.Cells[9, 2] = "";
+            DBWorkSheet.Cells[10, 2] = "";
 
-            templateSheet.Cells[10, 2] = template.ModelVersion;
-            templateSheet.Cells[11, 2] = template.Uuid;
-            templateSheet.Cells[12, 2] = template.Name;
-            templateSheet.Cells[13, 2] = template.Description;
-            templateSheet.Cells[14, 2] = template.SystemName;
-            templateSheet.Cells[15, 2] = template.SystemVersion;
-            templateSheet.Cells[16, 2] = template.Creator;
+            DBWorkSheet.Cells[11, 2] = template.ModelVersion;
+            DBWorkSheet.Cells[12, 2] = template.Uuid;
+            DBWorkSheet.Cells[13, 2] = template.Name;
+            DBWorkSheet.Cells[14, 2] = template.Description;
+            DBWorkSheet.Cells[15, 2] = template.SystemName;
+            DBWorkSheet.Cells[16, 2] = template.SystemVersion;
+            DBWorkSheet.Cells[17, 2] = template.Creator;
 
-            int count2 = 17;
+            int count2 = 18;
             if (template.Organizations != null)
             {
                 foreach (string org in template.Organizations)
                 {
-                    templateSheet.Cells[count2, 2] = org;
+                    DBWorkSheet.Cells[count2, 2] = org;
                     count2++;
                 }
             }
             else
             {
-                templateSheet.Cells[count2, 2] = null;
+                DBWorkSheet.Cells[count2, 2] = null;
                 count2++;
             }
 
-            templateSheet.Cells[count2, 2] = date;
-            templateSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
+            DBWorkSheet.Cells[count2, 2] = date;
+            DBWorkSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
 
-            Range range = templateSheet.Cells[2, 1];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
+            DBWorkSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            DBWorkSheet.Columns.AutoFit();
 
-            templateSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            templateSheet.Columns.AutoFit();
-
-            Marshal.ReleaseComObject(templateSheet);
+            Marshal.ReleaseComObject(DBWorkSheet);
         }
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -429,9 +481,10 @@ namespace KDRS_Metadata
             return new string(input.Where(c => char.IsDigit(c)).ToArray());
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        // Extracts entities from table dn column description.
         private void GetEntity(string description, Table table = null, Column column = null)
         {
-            Regex regex = new Regex(@"(?<entity1>(?<=\{)[^\{\}]+(?=\}))|(?<entity2>(?<=\[)[^\[\]]+(?=\]))|(?<desc>\w+)");
+            Regex regex = new Regex(@"(?<entity1>(?<=\{)[^\{\}]+(?=\}))|(?<entity2>(?<=\[)[^\[\]]+(?=\]))|(?<desc>\w+.*)");
 
             if (description != null)
             {
@@ -458,7 +511,7 @@ namespace KDRS_Metadata
 
                 if (table != null)
                     table.TableEntity = entities;
-                else if (column != null) 
+                else if (column != null)
                     column.Entity = entities;
 
                 if (entities != "")
@@ -513,12 +566,15 @@ namespace KDRS_Metadata
         public string Description { get; set; }
         public List<Column> Columns { get; set; }
         public PrimaryKey PrimaryKey { get; set; }
+        public List<ForeignKey> ForeignKeys { get; set; }
+        public List<CandidateKey> CandidateKeys { get; set; }
     }
 
     public class Column
     {
         public string Name { get; set; }
         public string Description { get; set; }
+        public string Nullable { get; set; }
         public string Folder { get; set; }
         public string Datatype { get; set; }
         public string Entity { get; set; }
@@ -526,6 +582,25 @@ namespace KDRS_Metadata
     }
 
     public class PrimaryKey
+    {
+        public string Name { get; set; }
+        public List<string> Columns { get; set; }
+        public string Description { get; set; }
+    }
+
+    public class ForeignKey
+    {
+        public string Name { get; set; }
+        public List<string> Columns { get; set; }
+        public string Description { get; set; }
+        public string ReferencedSchema { get; set; }
+        public string ReferencedTable { get; set; }
+        public List<string> ReferencedColumns { get; set; }
+        public string DeleteAction { get; set; }
+        public string UpdateAction { get; set; }
+    }
+
+    public class CandidateKey
     {
         public string Name { get; set; }
         public List<string> Columns { get; set; }
