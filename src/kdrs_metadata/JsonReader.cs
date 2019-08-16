@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -110,7 +111,9 @@ namespace KDRS_Metadata
                 Console.WriteLine(excelFileName);
             }
 
-            xlWorkBook.SaveAs(excelFileName);
+            int fileCounter = 1;
+
+            xlWorkBook.SaveAs(checkFileName(excelFileName, fileCounter));
 
             Marshal.ReleaseComObject(xlWorkSheets);
 
@@ -436,6 +439,12 @@ namespace KDRS_Metadata
             DBWorkSheet.Cells[6, 2] = template.SystemVersion;
             DBWorkSheet.Cells[7, 2] = "";
 
+            Range redColorRng = DBWorkSheet.Range["A3", "C6"];
+            redColorRng.Characters.Font.Color = Color.Red;
+
+            Range orangeColorRng = DBWorkSheet.Range["A7", "C7"];
+            orangeColorRng.Characters.Font.Color = Color.Orange;
+
             //tableCount
             DBWorkSheet.Cells[8, 2] = template.TemplateSchema.Tables.Count.ToString();
 
@@ -522,6 +531,23 @@ namespace KDRS_Metadata
                         column.Description = cleanDescription;
                 }
             }
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        private string checkFileName(string fileName, int fileCounter)
+        {
+
+            string origName = Path.GetFileNameWithoutExtension(fileName);
+            string folder = Directory.GetParent(Path.GetFullPath(fileName)).ToString();
+
+            string extension = Path.GetExtension(fileName);
+            while (File.Exists(fileName))
+            {
+                fileName = Path.Combine(folder, origName + "_" + fileCounter + extension);
+                fileCounter++;
+                // checkFileName(fileName, fileCounter);
+            }
+
+            return fileName;
         }
     }
 

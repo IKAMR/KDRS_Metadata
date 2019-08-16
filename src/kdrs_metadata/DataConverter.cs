@@ -1,6 +1,7 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -87,7 +88,9 @@ namespace KDRS_Metadata
 
             xlWorkBook.Sheets[1].Select();
 
-            if (includeTables)
+            int fileCounter = 1;
+
+           if (includeTables)
             {
                 excelFileName = Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx");
             }
@@ -99,7 +102,10 @@ namespace KDRS_Metadata
                 Console.WriteLine(excelFileName);
             }
 
-            xlWorkBook.SaveAs(excelFileName);
+            string checkedFileNAme = checkFileName(excelFileName, fileCounter);
+            //Console.WriteLine("Outfile: " + checkedFileNAme);
+                       
+            xlWorkBook.SaveAs(checkedFileNAme);
 
             xlApp1.UseSystemSeparators = true;
 
@@ -151,7 +157,7 @@ namespace KDRS_Metadata
 
             int cnt = 1;
 
-            // tooolname
+            // toolname
             DBWorkSheet.Cells[cnt, 1] = fieldNames[0];
             DBWorkSheet.Cells[cnt, 2] = Globals.toolName;
             cnt++;
@@ -167,6 +173,12 @@ namespace KDRS_Metadata
                 DBWorkSheet.Cells[cnt, 2] = "";
                 cnt++;
             }
+
+            Range redColorRng = DBWorkSheet.Range["A3", "C6"];
+            redColorRng.Characters.Font.Color = Color.Red;
+
+            Range orangeColorRng = DBWorkSheet.Range["A7", "C7"];
+            orangeColorRng.Characters.Font.Color = Color.Orange;
 
             //tableCount
             DBWorkSheet.Cells[cnt, 1] = fieldNames[7];
@@ -627,6 +639,23 @@ namespace KDRS_Metadata
                 return input;
             else
                 return "*****";
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        private string checkFileName(string fileName, int fileCounter)
+        {
+
+            string origName = Path.GetFileNameWithoutExtension(fileName);
+            string folder = Directory.GetParent(Path.GetFullPath(fileName)).ToString();
+            
+            string extension = Path.GetExtension(fileName);
+            while (File.Exists(fileName))
+            {
+                fileName = Path.Combine(folder, origName + "_" + fileCounter + extension);
+                fileCounter++;
+               // checkFileName(fileName, fileCounter);
+            }
+
+            return fileName;
         }
     }
     //==========================================================================================================
