@@ -23,11 +23,12 @@ namespace KDRS_Metadata
 
         List<string> resultList = new List<string>();
 
-        
+        string inputFileName;
 
         public Form1()
         {
             InitializeComponent();
+            Text = Globals.toolName + " " + Globals.toolVersion;
             this.AllowDrop = true;
             this.DragDrop += new DragEventHandler(Form1_DragDrop);
             this.DragEnter += new DragEventHandler(Form1_DragEnter);
@@ -64,7 +65,6 @@ namespace KDRS_Metadata
             CheckExcellProcesses();
             string fileName = "No file added";
 
-            CheckPrioList();
             label1.Text = "";
             textBox1.Clear();
             resultList.Clear();
@@ -77,6 +77,8 @@ namespace KDRS_Metadata
             {
                 fileName = files[0].ToString();
                 Console.WriteLine(fileName);
+
+                inputFileName = fileName;
 
                 backgroundWorker1 = new BackgroundWorker();
                 backgroundWorker1.DoWork += backgroundWorker1_DoWork;
@@ -121,6 +123,9 @@ namespace KDRS_Metadata
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+
+            CheckPrioList();
+            
             string fileName = e.Argument as string;
 
             string fileType = Path.GetExtension(fileName);
@@ -142,6 +147,11 @@ namespace KDRS_Metadata
 
                         resultList.Add("Target: " + jsonReader.excelFileName);
                         resultList.Add("Tables: " + jsonReader.tableCount);
+
+                        foreach (Schema schema in jsonReader.schemaNames)
+                        {
+                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
+                        }
 
                         break;
                     case ".xml":
@@ -183,6 +193,8 @@ namespace KDRS_Metadata
 
         private void CheckPrioList()
         {
+            priorities.Clear();
+
             //"HIGH", "MEDIUM", "LOW", "SYSTEM", "EMPTY", null
             if (priorityHigh.Checked)
             {
@@ -277,12 +289,26 @@ namespace KDRS_Metadata
         {
 
         }
+
+        private void btnCopyLog_Click(object sender, EventArgs e)
+        {
+            Clipboard.Clear();
+            Clipboard.SetText(textBox1.Text);
+        }
+
+        private void btnSaveLog_Click(object sender, EventArgs e)
+        {
+            string inputFolder = Path.GetDirectoryName(inputFileName);
+            string filename  = Path.Combine(inputFolder, Path.GetFileNameWithoutExtension(inputFileName) + "_log_" + DateTime.Now.ToString("yyyy-MM-dd-HHmm") + ".txt");
+
+            File.WriteAllText(filename, textBox1.Text);
+        }
         //----------------------------------------------------------------------------------------------
 
     }
     public static class Globals
     {
-        public static readonly String toolName = "KDRS-Metadata";
-        public static readonly String toolVersion = "0.7";
+        public static readonly String toolName = "KDRS Metadata";
+        public static readonly String toolVersion = "0.8";
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -18,13 +19,15 @@ namespace KDRS_Metadata
         public delegate void ProgressUpdate(int count, int totalCount);
         public event ProgressUpdate OnProgressUpdate;
 
-
         public void Convert(string filename, bool includeTables)
         {
-
             schemaNames.Clear();
 
-            Application xlApp1 = new Application();
+            Application xlApp1 = new Application
+            {
+                DecimalSeparator = ".",
+                UseSystemSeparators = false
+            };
             Workbooks xlWorkbooks = xlApp1.Workbooks;
 
             XmlDocument xmldoc = new XmlDocument();
@@ -36,13 +39,11 @@ namespace KDRS_Metadata
             nsmgr.AddNamespace("siard", nameSpace);
 
             Workbook xlWorkBook;
-
             Sheets xlWorkSheets;
 
             object misValue = System.Reflection.Missing.Value;
 
             xlWorkBook = xlWorkbooks.Add(misValue);
-
             xlWorkSheets = xlWorkBook.Sheets;
 
             Worksheet DBWorkSheet = xlWorkSheets.get_Item(1);
@@ -87,7 +88,9 @@ namespace KDRS_Metadata
 
             xlWorkBook.Sheets[1].Select();
 
-            if (includeTables)
+            int fileCounter = 1;
+
+           if (includeTables)
             {
                 excelFileName = Path.ChangeExtension(Path.GetFullPath(filename), ".xlsx");
             }
@@ -99,7 +102,12 @@ namespace KDRS_Metadata
                 Console.WriteLine(excelFileName);
             }
 
-            xlWorkBook.SaveAs(excelFileName);
+            string checkedFileNAme = checkFileName(excelFileName, fileCounter);
+            //Console.WriteLine("Outfile: " + checkedFileNAme);
+                       
+            xlWorkBook.SaveAs(checkedFileNAme);
+
+            xlApp1.UseSystemSeparators = true;
 
             xlWorkBook.Close();
             xlApp1.Quit();
@@ -149,7 +157,7 @@ namespace KDRS_Metadata
 
             int cnt = 1;
 
-            // tooolname
+            // toolname
             DBWorkSheet.Cells[cnt, 1] = fieldNames[0];
             DBWorkSheet.Cells[cnt, 2] = Globals.toolName;
             cnt++;
@@ -165,6 +173,12 @@ namespace KDRS_Metadata
                 DBWorkSheet.Cells[cnt, 2] = "";
                 cnt++;
             }
+
+            Range redColorRng = DBWorkSheet.Range["A3", "C6"];
+            redColorRng.Characters.Font.Color = Color.Red;
+
+            Range orangeColorRng = DBWorkSheet.Range["A7", "C7"];
+            orangeColorRng.Characters.Font.Color = Color.Orange;
 
             //tableCount
             DBWorkSheet.Cells[cnt, 1] = fieldNames[7];
@@ -188,7 +202,7 @@ namespace KDRS_Metadata
             {
                 string field = fieldNames[i];
                 DBWorkSheet.Cells[cnt, 1] = field;
-                DBWorkSheet.Cells[cnt, 2] = getNodeText(table, "//siard:" + field, nsmgr);
+                DBWorkSheet.Cells[cnt, 2] = GetNodeText(table, "//siard:" + field, nsmgr);
                 cnt++;
             }
 
@@ -204,31 +218,31 @@ namespace KDRS_Metadata
 
             //clientMachine
             DBWorkSheet.Cells[cnt, 1] = fieldNames[22];
-            DBWorkSheet.Cells[cnt, 2] = SensitiveString(getNodeText(table, "//siard:" + fieldNames[22], nsmgr));
+            DBWorkSheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[22], nsmgr));
             cnt++;
 
             //databaseProduct
             DBWorkSheet.Cells[cnt, 1] = fieldNames[23];
-            DBWorkSheet.Cells[cnt, 2] = getNodeText(table, "//siard:" + fieldNames[23], nsmgr);
+            DBWorkSheet.Cells[cnt, 2] = GetNodeText(table, "//siard:" + fieldNames[23], nsmgr);
             cnt++;
 
             //connection
             DBWorkSheet.Cells[cnt, 1] = fieldNames[24];
-            DBWorkSheet.Cells[cnt, 2] = SensitiveString(getNodeText(table, "//siard:" + fieldNames[24], nsmgr));
+            DBWorkSheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[24], nsmgr));
             cnt++;
 
             //databaseUser
             DBWorkSheet.Cells[cnt, 1] = fieldNames[25];
-            DBWorkSheet.Cells[cnt, 2] = SensitiveString(getNodeText(table, "//siard:" + fieldNames[25], nsmgr));
+            DBWorkSheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[25], nsmgr));
             cnt++;
 
             DBWorkSheet.Cells[cnt, 1] = "schemas";
             XmlNodeList schemas = table.SelectNodes("//siard:schemas/siard:schema", nsmgr);
 
-            string schemasList = getNodeText(schemas[0], "descendant::siard:folder", nsmgr);
+            string schemasList = GetNodeText(schemas[0], "descendant::siard:folder", nsmgr);
             for (int i=1; i<schemas.Count; i++)
             {
-                schemasList += ", " + getNodeText(schemas[i], "descendant::siard:folder", nsmgr);
+                schemasList += ", " + GetNodeText(schemas[i], "descendant::siard:folder", nsmgr);
             }
             DBWorkSheet.Cells[cnt, 2] = schemasList;
             cnt++;
@@ -237,12 +251,6 @@ namespace KDRS_Metadata
             XmlNode users = table.SelectSingleNode("//siard:users", nsmgr);
             DBWorkSheet.Cells[cnt, 2] = getChildCount(users);
             cnt++;
-
-            /*foreach (XmlNode user in users.ChildNodes)
-            {
-                DBWorkSheet.Cells[cnt, 2] = getNodeText(user, "descendant::siard:name", nsmgr);
-                cnt++;
-            }*/
 
             DBWorkSheet.Cells[cnt, 1] = "roles";
             XmlNode roles = table.SelectSingleNode("//siard:roles", nsmgr);
@@ -259,7 +267,6 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(DBWorkSheet);
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
         // Creates a worksheet with information for each table
         private void AddTable(Worksheet tableWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
@@ -298,21 +305,20 @@ namespace KDRS_Metadata
                 tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
             }
             //------------------------------------------------------------------------
-
             // Finds the metadata for each table and prints to Excel.
 
-            string table_description = getNodeText(table, "descendant::siard:description", nsmgr);
+            string table_description = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
 
-            string primaryKey_name = getNodeText(table["primaryKey"], "descendant::siard:name", nsmgr);
-            string primaryKey_column = getNodeText(table["primaryKey"], "descendant::siard:column", nsmgr);
+            string primaryKey_name = GetNodeText(table["primaryKey"], "descendant::siard:name", nsmgr);
+            string primaryKey_column = GetNodeText(table["primaryKey"], "descendant::siard:column", nsmgr);
 
             string tableRows = getInnerText(table["rows"]);
 
-            string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
+            string tablePriority = GetNodeText(table, "descendant::siard:priority", nsmgr);
             if (tableRows == "0")
-                tablePriority = "[EMPTY]";
+                tablePriority = "EMPTY";
 
-            string tableEntity = getNodeText(table, "descendant::siard:entity", nsmgr);
+            string tableEntity = GetNodeTxtEmpty(table, "descendant::siard:entity", nsmgr);
 
             string[][] rowNamesArray = new string[12][] {
                 new string[2] { "schemaName", table.ParentNode.ParentNode["name"].InnerText.ToString() },
@@ -326,7 +332,7 @@ namespace KDRS_Metadata
                 new string[2] { "columns", getChildCount(table["columns"]) },
                 new string[2] { "pkName", primaryKey_name },
                 new string[2] { "pkColumn", primaryKey_column },
-                new string[2] { "pkDescription", getNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
+                new string[2] { "pkDescription", GetNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
             };
 
             foreach (string[] rn in rowNamesArray)
@@ -344,17 +350,17 @@ namespace KDRS_Metadata
             {
                 foreach (XmlNode fKey in foreignKeys.ChildNodes)
                 {
-                    string foreignKeys_name = getNodeText(fKey, "descendant::siard:name", nsmgr);
+                    string foreignKeys_name = GetNodeText(fKey, "descendant::siard:name", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkName";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_name;
                     cellCount++;
 
-                    string foreignKeys_ref_schema = getNodeText(fKey, "descendant::siard:referencedSchema", nsmgr);
+                    string foreignKeys_ref_schema = GetNodeText(fKey, "descendant::siard:referencedSchema", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkRefSchema";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_ref_schema;
                     cellCount++;
 
-                    string foreignKeys_table = getNodeText(fKey, "descendant::siard:referencedTable", nsmgr);
+                    string foreignKeys_table = GetNodeText(fKey, "descendant::siard:referencedTable", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkRefTable";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_table;
                     cellCount++;
@@ -364,35 +370,34 @@ namespace KDRS_Metadata
                     {
                         foreach (XmlNode refer in reference)
                         {
-                            string foreignKeys_column = getNodeText(refer, "descendant::siard:column", nsmgr);
+                            string foreignKeys_column = GetNodeText(refer, "descendant::siard:column", nsmgr);
                             tableWorksheet.Cells[cellCount, 1] = "fkColumn";
                             tableWorksheet.Cells[cellCount, 2] = foreignKeys_column;
                             cellCount++;
 
-                            string foreignKeys_ref_col = getNodeText(refer, "descendant::siard:referenced", nsmgr);
+                            string foreignKeys_ref_col = GetNodeText(refer, "descendant::siard:referenced", nsmgr);
                             tableWorksheet.Cells[cellCount, 1] = "referenced";
                             tableWorksheet.Cells[cellCount, 2] = foreignKeys_ref_col;
                             cellCount++;
                         }
                     }
 
-                    string foreignKeys_description = getNodeText(fKey, "descendant::siard:description", nsmgr);
+                    string foreignKeys_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkDescription";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_description;
                     cellCount++;
 
-                    string foreignKeys_delete_action = getNodeText(fKey, "descendant::siard:deleteAction", nsmgr);
+                    string foreignKeys_delete_action = GetNodeText(fKey, "descendant::siard:deleteAction", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkDeleteAction";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_delete_action;
                     cellCount++;
 
-                    string foreignKeys_update_action = getNodeText(fKey, "descendant::siard:updateAction", nsmgr);
+                    string foreignKeys_update_action = GetNodeText(fKey, "descendant::siard:updateAction", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkUpdateAction";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_update_action;
                     cellCount++;
                 }
             }
-
             //-------------------------------------------------------------------------------------
             // Finds all candidate keys in table and prints to Excel.
             XmlNode candidateKeys = table.SelectSingleNode("descendant::siard:candidateKeys", nsmgr);
@@ -401,26 +406,25 @@ namespace KDRS_Metadata
             {
                 foreach (XmlNode cKey in candidateKeys.ChildNodes)
                 {
-                    string candidateKeys_name = getNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:name", nsmgr);
+                    string candidateKeys_name = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:name", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "ckName ";
                     tableWorksheet.Cells[cellCount, 2] = candidateKeys_name;
                     cellCount++;
 
-                    string candidateKeys_description = getNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
+                    string candidateKeys_description = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "ckDescription ";
                     tableWorksheet.Cells[cellCount, 2] = candidateKeys_description;
                     cellCount++;
 
                     for (int i=1; i<cKey.ChildNodes.Count; i++)
                     {
-                        string candidateKeys_column1 = getNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:column[" + i + "]", nsmgr);
+                        string candidateKeys_column1 = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:column[" + i + "]", nsmgr);
                         tableWorksheet.Cells[cellCount, 1] = "ckColumn";
                         tableWorksheet.Cells[cellCount, 2] = candidateKeys_column1;
                         cellCount++;
                     }
                 }
             }
-
             //-------------------------------------------------------------------------------------
             // Finds all columns in table and prints info to Excel.
             XmlNode tableColumns = table.SelectSingleNode("descendant::siard:columns", nsmgr);
@@ -433,25 +437,25 @@ namespace KDRS_Metadata
                     tableWorksheet.Cells[cellCount, 1] = column_count;
                     column_count++;
 
-                    string col_name = getNodeText(column, "descendant::siard:name", nsmgr);
+                    string col_name = GetNodeText(column, "descendant::siard:name", nsmgr);
                     tableWorksheet.Cells[cellCount, 2] = col_name;
 
-                    string col_type = getNodeText(column, "descendant::siard:type", nsmgr);
+                    string col_type = GetNodeText(column, "descendant::siard:type", nsmgr);
                     tableWorksheet.Cells[cellCount, 3] = col_type;
 
-                    string col_type_original = getNodeText(column, "descendant::siard:typeOriginal", nsmgr);
+                    string col_type_original = GetNodeText(column, "descendant::siard:typeOriginal", nsmgr);
                     tableWorksheet.Cells[cellCount, 4] = col_type_original;
 
-                    string col_nullable = getNodeText(column, "descendant::siard:nullable", nsmgr);
+                    string col_nullable = GetNodeText(column, "descendant::siard:nullable", nsmgr);
                     tableWorksheet.Cells[cellCount, 5] = col_nullable;
 
-                    string col_defaultValue = getNodeText(column, "descendant::siard:defaultValue", nsmgr);
+                    string col_defaultValue = GetNodeText(column, "descendant::siard:defaultValue", nsmgr);
                     tableWorksheet.Cells[cellCount, 6] = col_defaultValue;
 
-                    string col_lobFolder = getNodeText(column, "descendant::siard:lobFolder", nsmgr);
+                    string col_lobFolder = GetNodeText(column, "descendant::siard:lobFolder", nsmgr);
                     tableWorksheet.Cells[cellCount, 7] = col_lobFolder;
 
-                    string col_description = getNodeText(column, "descendant::siard:description", nsmgr);
+                    string col_description = GetNodeTxtEmpty(column, "descendant::siard:description", nsmgr);
                     tableWorksheet.Cells[cellCount, 8] = col_description;
 
                     cellCount++;
@@ -467,20 +471,19 @@ namespace KDRS_Metadata
 
             Marshal.ReleaseComObject(tableWorksheet);
         }
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Returns Innertext of node found in table with query.
-        private string getNodeText(XmlNode table, string query, XmlNamespaceManager nsmgr)
+        private string GetNodeText(XmlNode table, string query, XmlNamespaceManager nsmgr)
         {
-            string varName = "[EMPTY]";
+            string varName = "[NA]";
             if (table != null)
             {
                 XmlNode node = table.SelectSingleNode(query, nsmgr);
                 if (node != null)
                 {
                     varName = node.InnerText;
-                    if (varName == "")
+                    if (varName == "" && query != "descendant::siard:deleteAction" && query != "descendant::siard:updateAction")
                         varName = "[EMPTY]";
                 }
             }
@@ -488,10 +491,27 @@ namespace KDRS_Metadata
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+        // Returns Innertext of node found in table with query. If no text return empty string.
+        private string GetNodeTxtEmpty(XmlNode table, string query, XmlNamespaceManager nsmgr)
+        {
+            string text = "";
+            if (table != null)
+            {
+                XmlNode node = table.SelectSingleNode(query, nsmgr);
+                if (node != null)
+                {
+                    text = node.InnerText;
+                }
+            }
+
+                    return text;
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
         // Returns Innertext of node.
         private string getInnerText(XmlNode table)
         {
-            string varName = "[EMPTY]";
+            string varName = "[NA]";
             if (table != null)
             {
                 varName = table.InnerText;
@@ -502,7 +522,7 @@ namespace KDRS_Metadata
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        // Returns children count of node.
+        // Returns the children count of table.
         private string getChildCount(XmlNode table)
         {
             string varName = "0";
@@ -513,7 +533,6 @@ namespace KDRS_Metadata
             return varName;
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
         // Creates a worksheet with table overview
         private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr, bool includeTables)
         {
@@ -579,6 +598,7 @@ namespace KDRS_Metadata
                     {
                         tableOverviewWorksheet.Cells[count, 1] = name;
                     }
+
                     tableOverviewWorksheet.Cells[count, 2] = getInnerText(table["folder"]);
                     tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
 
@@ -588,15 +608,18 @@ namespace KDRS_Metadata
                     string tableColumns = getChildCount(table["columns"]);
                     tableOverviewWorksheet.Cells[count, 5] = tableColumns;
 
-                    string tablePriority = getNodeText(table, "descendant::siard:priority", nsmgr);
+                    string tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
                     if (tableRows == "0")
-                        tableOverviewWorksheet.Cells[count, 6] = "[EMPTY]";
+                        tableOverviewWorksheet.Cells[count, 6] = "EMPTY";
                     else
                         tableOverviewWorksheet.Cells[count, 6] = tablePriority;
                     count++;
-
                 }
             }
+
+            Range range = tableOverviewWorksheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
 
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
@@ -616,6 +639,23 @@ namespace KDRS_Metadata
                 return input;
             else
                 return "*****";
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        private string checkFileName(string fileName, int fileCounter)
+        {
+
+            string origName = Path.GetFileNameWithoutExtension(fileName);
+            string folder = Directory.GetParent(Path.GetFullPath(fileName)).ToString();
+            
+            string extension = Path.GetExtension(fileName);
+            while (File.Exists(fileName))
+            {
+                fileName = Path.Combine(folder, origName + "_" + fileCounter + extension);
+                fileCounter++;
+               // checkFileName(fileName, fileCounter);
+            }
+
+            return fileName;
         }
     }
     //==========================================================================================================
