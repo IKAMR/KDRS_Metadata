@@ -296,6 +296,7 @@ namespace KDRS_Metadata
                 "nullable",
                 "defaultValue",
                 "lobFolder",
+                "entity",
                 "description",
                 "note"
             };

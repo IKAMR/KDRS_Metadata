@@ -131,7 +131,7 @@ namespace KDRS_Metadata
         // Creates a worksheet with information for each table
         private void AddTable(Worksheet tableWorksheet, Schema schema, Table table)
         {
-
+            Console.WriteLine("Table: " + table.Name);
             tableWorksheet.Name = GetNumbers(table.Folder);
 
             Range c1 = tableWorksheet.Cells[1, 1];
@@ -161,6 +161,7 @@ namespace KDRS_Metadata
                 tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
             }
             //-------------------------------------------------------------------
+
             string[][] rowNamesArray = new string[9][] {
                 new string[2] { "schemaName", schema.Name },
                 new string[2] { "schemaFolder", schema.Folder},
@@ -181,7 +182,6 @@ namespace KDRS_Metadata
                 tableWorksheet.Cells[count, 2] = rn[1];
                 count++;
             }
-
             // Primary keys
             if (table.PrimaryKey != null)
             {
@@ -189,17 +189,21 @@ namespace KDRS_Metadata
                 tableWorksheet.Cells[count, 2] = table.PrimaryKey.Name;
                 count++;
 
-                foreach (string column in table.PrimaryKey.Columns)
+                if (table.PrimaryKey.Columns != null)
                 {
-                    tableWorksheet.Cells[count, 1] = "pkColumn";
-                    tableWorksheet.Cells[count, 2] = column;
-                    count++;
+                    foreach (string column in table.PrimaryKey.Columns)
+                    {
+                        tableWorksheet.Cells[count, 1] = "pkColumn";
+                        tableWorksheet.Cells[count, 2] = column;
+                        count++;
+                    }
                 }
 
                 tableWorksheet.Cells[count, 1] = "pkDescription";
                 tableWorksheet.Cells[count, 2] = table.PrimaryKey.Description;
                 count++;
             }
+            Console.WriteLine("fKEYS");
 
             // Foreign keys
             if (table.ForeignKeys != null)
@@ -210,32 +214,38 @@ namespace KDRS_Metadata
                     tableWorksheet.Cells[count, 2] = fkey.Name;
                     count++;
 
-                    foreach (string column in fkey.Columns)
+                    if (fkey.Columns != null)
                     {
-                        tableWorksheet.Cells[count, 1] = "fkColumn";
-                        tableWorksheet.Cells[count, 2] = column;
-                        count++;
+                        foreach (string column in fkey.Columns)
+                        {
+                            tableWorksheet.Cells[count, 1] = "fkColumn";
+                            tableWorksheet.Cells[count, 2] = column;
+                            count++;
+                        }
                     }
-
+                    
                     tableWorksheet.Cells[count, 1] = "fkRefSchema";
                     tableWorksheet.Cells[count, 2] = fkey.ReferencedSchema;
                     count++;
-
+                    
                     tableWorksheet.Cells[count, 1] = "fkRefTable";
                     tableWorksheet.Cells[count, 2] = fkey.ReferencedTable;
                     count++;
 
-                    foreach (string column in fkey.ReferencedColumns)
+                    if (fkey.ReferencedColumns != null)
                     {
-                        tableWorksheet.Cells[count, 1] = "fkReferencedColumns";
-                        tableWorksheet.Cells[count, 2] = column;
-                        count++;
+                        foreach (string column in fkey.ReferencedColumns)
+                        {
+                            tableWorksheet.Cells[count, 1] = "fkReferencedColumns";
+                            tableWorksheet.Cells[count, 2] = column;
+                            count++;
+                        }
                     }
-
+                    
                     tableWorksheet.Cells[count, 1] = "fkDescription";
                     tableWorksheet.Cells[count, 2] = fkey.Description;
                     count++;
-
+                    
                     tableWorksheet.Cells[count, 1] = "fkDeleteAction";
                     tableWorksheet.Cells[count, 2] = fkey.DeleteAction;
                     count++;
@@ -245,6 +255,7 @@ namespace KDRS_Metadata
                     count++;
                 }
             }
+            Console.WriteLine("cKEYS");
 
             // Candidate keys
             if (table.CandidateKeys != null)
@@ -255,11 +266,14 @@ namespace KDRS_Metadata
                     tableWorksheet.Cells[count, 2] = ckey.Name;
                     count++;
 
-                    foreach (string column in ckey.Columns)
+                    if (ckey.Columns != null)
                     {
-                        tableWorksheet.Cells[count, 1] = "ckColumn";
-                        tableWorksheet.Cells[count, 2] = column;
-                        count++;
+                        foreach (string column in ckey.Columns)
+                        {
+                            tableWorksheet.Cells[count, 1] = "ckColumn";
+                            tableWorksheet.Cells[count, 2] = column;
+                            count++;
+                        }
                     }
 
                     tableWorksheet.Cells[count, 1] = "ckDescription";
