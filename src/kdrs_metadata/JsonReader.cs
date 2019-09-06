@@ -125,9 +125,195 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp1);
         }
-
         //*************************************************************************
+        // Creates a worksheet with information about the template.
+        private void AddDBInfo(Worksheet DBWorkSheet, Template template)
+        {
+            DBWorkSheet.Name = "db";
 
+            List<string> fieldNames = new List<string>()
+            {
+                "toolname",
+                "toolVersion",
+                "systemSupplier",
+                "systemId",
+                "systemName",
+                "systemVersion",
+                "systemInstance",
+                "tableCount",
+                "",
+                "Decom JSON",
+                "modelVersion",
+                "uuid",
+                "name",
+                "description",
+                "systemName",
+                "systemVersion",
+                "creator",
+                "organizations",
+                "creationDate",
+                "templateVisibility"
+            };
+
+            var prop = template.GetType().GetProperties();
+
+            int count = 1;
+            foreach (string s in fieldNames)
+            {
+                DBWorkSheet.Cells[count, 1] = s;
+                count++;
+
+                if (s == "organizations" && template.Organizations != null && template.Organizations.Count > 1)
+                {
+                    for (int i = 1; i < template.Organizations.Count; i++)
+                    {
+                        DBWorkSheet.Cells[count, 1] = null;
+                        count++;
+                    }
+                }
+            }
+
+            double creationDate = template.CreationDate;
+
+            var date = new DateTime(1970, 1, 1, 0, 0, 0).AddMilliseconds(creationDate).ToLocalTime();
+
+            // toolname
+            DBWorkSheet.Cells[1, 2] = Globals.toolName;
+
+            // toolVersion
+            DBWorkSheet.Cells[2, 2] = Globals.toolVersion;
+
+            DBWorkSheet.Cells[3, 2] = "";
+            DBWorkSheet.Cells[4, 2] = "";
+            DBWorkSheet.Cells[5, 2] = template.SystemName;
+            DBWorkSheet.Cells[6, 2] = template.SystemVersion;
+            DBWorkSheet.Cells[7, 2] = "";
+
+            Range redColorRng = DBWorkSheet.Range["A3", "C6"];
+            redColorRng.Characters.Font.Color = Color.Red;
+
+            Range orangeColorRng = DBWorkSheet.Range["A7", "C7"];
+            orangeColorRng.Characters.Font.Color = Color.Orange;
+
+            //tableCount
+            DBWorkSheet.Cells[8, 2] = template.TemplateSchema.Tables.Count.ToString();
+
+            DBWorkSheet.Cells[9, 2] = "";
+
+            DBWorkSheet.Cells[10, 2] = "";
+
+            DBWorkSheet.Cells[11, 2] = template.ModelVersion;
+            DBWorkSheet.Cells[12, 2] = template.Uuid;
+            DBWorkSheet.Cells[13, 2] = template.Name;
+            DBWorkSheet.Cells[14, 2] = template.Description;
+            DBWorkSheet.Cells[15, 2] = template.SystemName;
+            DBWorkSheet.Cells[16, 2] = template.SystemVersion;
+            DBWorkSheet.Cells[17, 2] = template.Creator;
+
+            int count2 = 18;
+            if (template.Organizations != null)
+            {
+                foreach (string org in template.Organizations)
+                {
+                    DBWorkSheet.Cells[count2, 2] = org;
+                    count2++;
+                }
+            }
+            else
+            {
+                DBWorkSheet.Cells[count2, 2] = null;
+                count2++;
+            }
+
+            DBWorkSheet.Cells[count2, 2] = date;
+            DBWorkSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
+
+            DBWorkSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            DBWorkSheet.Columns.AutoFit();
+
+            Marshal.ReleaseComObject(DBWorkSheet);
+        }
+        //*************************************************************************
+        // Creates a worksheet with table overview
+        private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
+        {
+            tableOverviewWorksheet.Name = "tables";
+
+            List<string> columnNames = new List<string>()
+            {
+                "table",
+                "folder",
+                "schema",
+                "rows",
+                "columns",
+                "priority",
+                "pri-sort",
+                "entity",
+                "description",
+                "note"
+            };
+
+            foreach (string name in columnNames)
+            {
+                tableOverviewWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
+            }
+            //-------------------------------------------------------------------
+            int count = 2;
+            foreach (Table table in schema.Tables)
+            {
+                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+                GetEntity(table.Description, table);
+                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+
+                if (priorities.Contains(table.TablePriority))
+                {
+                    if (includeTables)
+                    {
+                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
+                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
+                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
+
+                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+                        links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
+
+                        Marshal.ReleaseComObject(c1);
+                        Marshal.ReleaseComObject(c2);
+                        Marshal.ReleaseComObject(linkCell);
+                        Marshal.ReleaseComObject(links);
+                    }
+                    else
+                    {
+                        tableOverviewWorksheet.Cells[count, 1] = table.Name;
+                    }
+
+                    tableOverviewWorksheet.Cells[count, 2] = table.Folder;
+                    tableOverviewWorksheet.Cells[count, 3] = schema.Name;
+                    tableOverviewWorksheet.Cells[count, 4] = table.Rows;
+                    tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
+                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
+
+                    // Pri sort
+                    tableOverviewWorksheet.Cells[count, 7] = Globals.PriSort(table.TablePriority);
+                    tableOverviewWorksheet.Cells[count, 8] = table.TableEntity;
+                    tableOverviewWorksheet.Cells[count, 9] = table.Description;
+
+                    // Note
+                    tableOverviewWorksheet.Cells[count, 10] = "";
+
+                    count++;
+                }
+            }
+
+            Range range = tableOverviewWorksheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
+            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            tableOverviewWorksheet.Columns.AutoFit();
+
+            Marshal.ReleaseComObject(tableOverviewWorksheet);
+        }
+        //*************************************************************************
         // Creates a worksheet with information for each table
         private void AddTable(Worksheet tableWorksheet, Schema schema, Table table)
         {
@@ -149,8 +335,10 @@ namespace KDRS_Metadata
                 "column",
                 "name",
                 "type",
+                "typeOrginal",
                 "nullable",
-                "folder",
+                "defaultValue",
+                "lobFolder",
                 "entity",
                 "description",
                 "note"
@@ -310,193 +498,7 @@ namespace KDRS_Metadata
 
             Marshal.ReleaseComObject(tableWorksheet);
         }
-
-        //*************************************************************************
-
-        // Creates a worksheet with table overview
-        private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
-        {
-            tableOverviewWorksheet.Name = "tables";
-
-            List<string> columnNames = new List<string>()
-            {
-                "table",
-                "folder",
-                "schema",
-                "rows",
-                "columns",
-                "priority",
-                "pri-sort",
-                "entity",
-                "description",
-                "note"
-            };
-
-            foreach (string name in columnNames)
-            {
-                tableOverviewWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
-            }
-            //-------------------------------------------------------------------
-            int count = 2;
-            foreach (Table table in schema.Tables)
-            {
-                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
-                GetEntity(table.Description, table);
-                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
-
-                if (priorities.Contains(table.TablePriority))
-                {
-                    if (includeTables)
-                    {
-                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
-                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
-
-                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
-                        links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
-
-                        Marshal.ReleaseComObject(c1);
-                        Marshal.ReleaseComObject(c2);
-                        Marshal.ReleaseComObject(linkCell);
-                        Marshal.ReleaseComObject(links);
-                    }
-                    else
-                    {
-                        tableOverviewWorksheet.Cells[count, 1] = table.Name;
-                    }
-
-                    tableOverviewWorksheet.Cells[count, 2] = table.Folder;
-                    tableOverviewWorksheet.Cells[count, 3] = schema.Name;
-                    tableOverviewWorksheet.Cells[count, 4] = table.Rows;
-                    tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
-                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
-                    tableOverviewWorksheet.Cells[count, 7] = "";
-                    tableOverviewWorksheet.Cells[count, 8] = table.TableEntity;
-                    tableOverviewWorksheet.Cells[count, 9] = table.Description;
-                    tableOverviewWorksheet.Cells[count, 10] = "";
-
-                    count++;
-                }
-            }
-
-            Range range = tableOverviewWorksheet.Cells[2, 1];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
-
-            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableOverviewWorksheet.Columns.AutoFit();
-
-            Marshal.ReleaseComObject(tableOverviewWorksheet);
-        }
-        //*************************************************************************
-
-        // Creates a worksheet with information about the template.
-        private void AddDBInfo(Worksheet DBWorkSheet, Template template)
-        {
-            DBWorkSheet.Name = "db";
-
-            List<string> fieldNames = new List<string>()
-            {
-                "toolname",
-                "toolVersion",
-                "systemSupplier",
-                "systemId",
-                "systemName",
-                "systemVersion",
-                "systemInstance",
-                "tableCount",
-                "",
-                "Decom JSON",
-                "modelVersion",
-                "uuid",
-                "name",
-                "description",
-                "systemName",
-                "systemVersion",
-                "creator",
-                "organizations",
-                "creationDate",
-                "templateVisibility"
-            };
-
-            var prop = template.GetType().GetProperties();
-
-            int count = 1;
-            foreach (string s in fieldNames)
-            {
-                DBWorkSheet.Cells[count, 1] = s;
-                count++;
-
-                if (s == "organizations" && template.Organizations != null && template.Organizations.Count > 1)
-                {
-                    for (int i = 1; i < template.Organizations.Count; i++)
-                    {
-                        DBWorkSheet.Cells[count, 1] = null;
-                        count++;
-                    }
-                }
-            }
-
-            double creationDate = template.CreationDate;
-
-            var date = new DateTime(1970, 1, 1, 0, 0, 0).AddMilliseconds(creationDate).ToLocalTime();
-
-            // toolname
-            DBWorkSheet.Cells[1, 2] = Globals.toolName;
-
-            // toolVersion
-            DBWorkSheet.Cells[2, 2] = Globals.toolVersion;
-
-            DBWorkSheet.Cells[3, 2] = "";
-            DBWorkSheet.Cells[4, 2] = "";
-            DBWorkSheet.Cells[5, 2] = template.SystemName;
-            DBWorkSheet.Cells[6, 2] = template.SystemVersion;
-            DBWorkSheet.Cells[7, 2] = "";
-
-            Range redColorRng = DBWorkSheet.Range["A3", "C6"];
-            redColorRng.Characters.Font.Color = Color.Red;
-
-            Range orangeColorRng = DBWorkSheet.Range["A7", "C7"];
-            orangeColorRng.Characters.Font.Color = Color.Orange;
-
-            //tableCount
-            DBWorkSheet.Cells[8, 2] = template.TemplateSchema.Tables.Count.ToString();
-
-            DBWorkSheet.Cells[9, 2] = "";
-
-            DBWorkSheet.Cells[10, 2] = "";
-
-            DBWorkSheet.Cells[11, 2] = template.ModelVersion;
-            DBWorkSheet.Cells[12, 2] = template.Uuid;
-            DBWorkSheet.Cells[13, 2] = template.Name;
-            DBWorkSheet.Cells[14, 2] = template.Description;
-            DBWorkSheet.Cells[15, 2] = template.SystemName;
-            DBWorkSheet.Cells[16, 2] = template.SystemVersion;
-            DBWorkSheet.Cells[17, 2] = template.Creator;
-
-            int count2 = 18;
-            if (template.Organizations != null)
-            {
-                foreach (string org in template.Organizations)
-                {
-                    DBWorkSheet.Cells[count2, 2] = org;
-                    count2++;
-                }
-            }
-            else
-            {
-                DBWorkSheet.Cells[count2, 2] = null;
-                count2++;
-            }
-
-            DBWorkSheet.Cells[count2, 2] = date;
-            DBWorkSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
-
-            DBWorkSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            DBWorkSheet.Columns.AutoFit();
-
-            Marshal.ReleaseComObject(DBWorkSheet);
-        }
+        
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         private static string GetNumbers(string input)
@@ -563,8 +565,8 @@ namespace KDRS_Metadata
 
             return fileName;
         }
-    }
 
+    }
     //====================================================================================
 
     public class Template

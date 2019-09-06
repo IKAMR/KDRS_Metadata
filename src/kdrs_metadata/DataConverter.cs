@@ -267,6 +267,104 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(DBWorkSheet);
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        // Creates a worksheet with table overview
+        private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr, bool includeTables)
+        {
+            tableOverviewWorksheet.Name = "tables";
+
+            List<string> columnNames = new List<string>()
+            {
+                "table",
+                "folder",
+                "schema",
+                "rows",
+                "columns",
+                "priority",
+                "pri-sort",
+                "entity",
+                "description",
+                "note"
+            };
+
+            foreach (string name in columnNames)
+            {
+                tableOverviewWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
+            }
+
+            List<string> objectNames = new List<string>()
+            {
+                "name",
+                "folder",
+                "schema",
+                "rows"
+            };
+
+            int count = 2;
+            foreach (XmlNode schema in schemas)
+            {
+                XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
+                string schemaNumber = GetNumbers(schema["folder"].InnerText);
+
+                foreach (XmlNode table in tables.ChildNodes)
+                {
+                    string name = table["name"].InnerText;
+                    string folder = GetNumbers(table["folder"].InnerText);
+                    if (includeTables)
+                    {
+                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
+                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
+                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
+
+                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+
+                        if (totalSchemaCount < 2)
+                            links.Add(linkCell, "", folder + "!A1", "", name);
+                        else
+                            links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
+
+                        Marshal.ReleaseComObject(c1);
+                        Marshal.ReleaseComObject(c2);
+                        Marshal.ReleaseComObject(linkCell);
+                        Marshal.ReleaseComObject(links);
+                    }
+                    else
+                    {
+                        tableOverviewWorksheet.Cells[count, 1] = name;
+                    }
+
+                    tableOverviewWorksheet.Cells[count, 2] = getInnerText(table["folder"]);
+                    tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
+
+                    string tableRows = getInnerText(table["rows"]);
+                    tableOverviewWorksheet.Cells[count, 4] = tableRows;
+
+                    string tableColumns = getChildCount(table["columns"]);
+                    tableOverviewWorksheet.Cells[count, 5] = tableColumns;
+
+                    string tablePriority = "";
+                    if (tableRows == "0")
+                        tablePriority = "EMPTY";
+                    else
+                        tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
+
+                    tableOverviewWorksheet.Cells[count, 6] = tablePriority;
+
+                    int tablePriSort = Globals.PriSort(tablePriority);
+                    tableOverviewWorksheet.Cells[count, 7] = tablePriSort;
+                    count++;
+                }
+            }
+
+            Range range = tableOverviewWorksheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
+            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            tableOverviewWorksheet.Columns.AutoFit();
+
+            Marshal.ReleaseComObject(tableOverviewWorksheet);
+        }
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         // Creates a worksheet with information for each table
         private void AddTable(Worksheet tableWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
@@ -456,8 +554,11 @@ namespace KDRS_Metadata
                     string col_lobFolder = GetNodeText(column, "descendant::siard:lobFolder", nsmgr);
                     tableWorksheet.Cells[cellCount, 7] = col_lobFolder;
 
+                    string col_entity = GetNodeText(column, "descendant::siard:entity", nsmgr);
+                    tableWorksheet.Cells[cellCount, 8] = col_lobFolder;
+
                     string col_description = GetNodeTxtEmpty(column, "descendant::siard:description", nsmgr);
-                    tableWorksheet.Cells[cellCount, 8] = col_description;
+                    tableWorksheet.Cells[cellCount, 9] = col_description;
 
                     cellCount++;
                 }
@@ -472,6 +573,7 @@ namespace KDRS_Metadata
 
             Marshal.ReleaseComObject(tableWorksheet);
         }
+
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         // Returns Innertext of node found in table with query.
@@ -533,100 +635,7 @@ namespace KDRS_Metadata
             }
             return varName;
         }
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        // Creates a worksheet with table overview
-        private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr, bool includeTables)
-        {
-            tableOverviewWorksheet.Name = "tables";
 
-           // XmlNode tables = schemas.SelectSingleNode("descendant::siard:table");
-
-            List<string> columnNames = new List<string>()
-            {
-                "table",
-                "folder",
-                "schema",
-                "rows",
-                "columns",
-                "priority",
-                "entity",
-                "description",
-                "note"
-            };
-
-            foreach (string name in columnNames)
-            {
-                tableOverviewWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
-            }
-
-            List<string> objectNames = new List<string>()
-            {
-                "name",
-                "folder",
-                "schema",
-                "rows"
-            };
-
-            int count = 2;
-            foreach (XmlNode schema in schemas)
-            {
-                XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
-                string schemaNumber = GetNumbers(schema["folder"].InnerText);
-
-                foreach (XmlNode table in tables.ChildNodes)
-                {
-                    string name = table["name"].InnerText;
-                    string folder = GetNumbers(table["folder"].InnerText);
-                    if (includeTables)
-                    {
-                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
-                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
-
-                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
-
-                        if (totalSchemaCount < 2)
-                            links.Add(linkCell, "", folder + "!A1", "", name);
-                        else
-                            links.Add(linkCell, "", schemaNumber + "." + folder + "!A1", "", name);
-
-                        Marshal.ReleaseComObject(c1);
-                        Marshal.ReleaseComObject(c2);
-                        Marshal.ReleaseComObject(linkCell);
-                        Marshal.ReleaseComObject(links);
-                    }
-                    else
-                    {
-                        tableOverviewWorksheet.Cells[count, 1] = name;
-                    }
-
-                    tableOverviewWorksheet.Cells[count, 2] = getInnerText(table["folder"]);
-                    tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
-
-                    string tableRows = getInnerText(table["rows"]);
-                    tableOverviewWorksheet.Cells[count, 4] = tableRows;
-
-                    string tableColumns = getChildCount(table["columns"]);
-                    tableOverviewWorksheet.Cells[count, 5] = tableColumns;
-
-                    string tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
-                    if (tableRows == "0")
-                        tableOverviewWorksheet.Cells[count, 6] = "EMPTY";
-                    else
-                        tableOverviewWorksheet.Cells[count, 6] = tablePriority;
-                    count++;
-                }
-            }
-
-            Range range = tableOverviewWorksheet.Cells[2, 1];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
-
-            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableOverviewWorksheet.Columns.AutoFit();
-
-            Marshal.ReleaseComObject(tableOverviewWorksheet);
-        }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         private static string GetNumbers(string input)
         {
