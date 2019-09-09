@@ -309,6 +309,30 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS Metadata";
-        public static readonly String toolVersion = "0.8";
+        public static readonly String toolVersion = "0.9";
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        public static int PriSort(string priority)
+        {
+            switch (priority)
+            {
+                case "HIGH":
+                    return 1;
+                case "MEDIUM":
+                    return 2;
+                case "LOW":
+                    return 3;
+                case "SYSTEM":
+                    return 4;
+                case "STATS":
+                    return 5;
+                case "EMPTY":
+                    return 6;
+                case "DUMMY":
+                    return 7;
+            }
+
+            return 8;
+        }
     }
 }

@@ -125,257 +125,7 @@ namespace KDRS_Metadata
             Marshal.ReleaseComObject(xlWorkBooks);
             Marshal.ReleaseComObject(xlApp1);
         }
-
         //*************************************************************************
-
-        // Creates a worksheet with information for each table
-        private void AddTable(Worksheet tableWorksheet, Schema schema, Table table)
-        {
-
-            tableWorksheet.Name = GetNumbers(table.Folder);
-
-            Range c1 = tableWorksheet.Cells[1, 1];
-            Range c2 = tableWorksheet.Cells[1, 1];
-            Range linkCell = tableWorksheet.get_Range(c1, c2);
-
-            Hyperlinks links = tableWorksheet.Hyperlinks;
-
-            links.Add(linkCell, "", "tables!A1", "", "column <<< tables");
-
-            //tableWorksheet.Name = table.Name;
-
-            List<string> columnNames = new List<string>()
-            {
-                "column",
-                "name",
-                "type",
-                "nullable",
-                "folder",
-                "entity",
-                "description",
-                "note"
-            };
-
-            foreach (string name in columnNames.Skip(1))
-            {
-                tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
-            }
-            //-------------------------------------------------------------------
-            string[][] rowNamesArray = new string[9][] {
-                new string[2] { "schemaName", schema.Name },
-                new string[2] { "schemaFolder", schema.Folder},
-                new string[2] { "tableName", table.Name },
-                new string[2] { "tableFolder", table.Folder },
-                new string[2] { "tablePriority", table.TablePriority },
-                new string[2] { "tableEntity", table.TableEntity },
-                new string[2] { "tableDescription", table.Description },
-                new string[2] { "rows", table.Rows.ToString() },
-                new string[2] { "columns", table.Columns.Count().ToString() },
-            };
-
-            int count = 2;
-
-            foreach (string[] rn in rowNamesArray)
-            {
-                tableWorksheet.Cells[count, 1] = rn;
-                tableWorksheet.Cells[count, 2] = rn[1];
-                count++;
-            }
-
-            // Primary keys
-            if (table.PrimaryKey != null)
-            {
-                tableWorksheet.Cells[count, 1] = "pkName";
-                tableWorksheet.Cells[count, 2] = table.PrimaryKey.Name;
-                count++;
-
-                foreach (string column in table.PrimaryKey.Columns)
-                {
-                    tableWorksheet.Cells[count, 1] = "pkColumn";
-                    tableWorksheet.Cells[count, 2] = column;
-                    count++;
-                }
-
-                tableWorksheet.Cells[count, 1] = "pkDescription";
-                tableWorksheet.Cells[count, 2] = table.PrimaryKey.Description;
-                count++;
-            }
-
-            // Foreign keys
-            if (table.ForeignKeys != null)
-            {
-                foreach (ForeignKey fkey in table.ForeignKeys)
-                {
-                    tableWorksheet.Cells[count, 1] = "fkName";
-                    tableWorksheet.Cells[count, 2] = fkey.Name;
-                    count++;
-
-                    foreach (string column in fkey.Columns)
-                    {
-                        tableWorksheet.Cells[count, 1] = "fkColumn";
-                        tableWorksheet.Cells[count, 2] = column;
-                        count++;
-                    }
-
-                    tableWorksheet.Cells[count, 1] = "fkRefSchema";
-                    tableWorksheet.Cells[count, 2] = fkey.ReferencedSchema;
-                    count++;
-
-                    tableWorksheet.Cells[count, 1] = "fkRefTable";
-                    tableWorksheet.Cells[count, 2] = fkey.ReferencedTable;
-                    count++;
-
-                    foreach (string column in fkey.ReferencedColumns)
-                    {
-                        tableWorksheet.Cells[count, 1] = "fkReferencedColumns";
-                        tableWorksheet.Cells[count, 2] = column;
-                        count++;
-                    }
-
-                    tableWorksheet.Cells[count, 1] = "fkDescription";
-                    tableWorksheet.Cells[count, 2] = fkey.Description;
-                    count++;
-
-                    tableWorksheet.Cells[count, 1] = "fkDeleteAction";
-                    tableWorksheet.Cells[count, 2] = fkey.DeleteAction;
-                    count++;
-
-                    tableWorksheet.Cells[count, 1] = "fkUpdateAction";
-                    tableWorksheet.Cells[count, 2] = fkey.UpdateAction;
-                    count++;
-                }
-            }
-
-            // Candidate keys
-            if (table.CandidateKeys != null)
-            {
-                foreach (CandidateKey ckey in table.CandidateKeys)
-                {
-                    tableWorksheet.Cells[count, 1] = "ckName";
-                    tableWorksheet.Cells[count, 2] = ckey.Name;
-                    count++;
-
-                    foreach (string column in ckey.Columns)
-                    {
-                        tableWorksheet.Cells[count, 1] = "ckColumn";
-                        tableWorksheet.Cells[count, 2] = column;
-                        count++;
-                    }
-
-                    tableWorksheet.Cells[count, 1] = "ckDescription";
-                    tableWorksheet.Cells[count, 2] = ckey.Description;
-                    count++;
-                }
-            }
-
-            // Columns
-            int columnCount = 1;
-            foreach (Column column in table.Columns)
-            {
-                GetEntity(column.Description, null, column);
-
-                tableWorksheet.Cells[count, 1] = columnCount;
-                tableWorksheet.Cells[count, 2] = column.Name;
-                tableWorksheet.Cells[count, 3] = column.Datatype;
-                tableWorksheet.Cells[count, 4] = column.Nullable;
-                tableWorksheet.Cells[count, 5] = column.Folder;
-                tableWorksheet.Cells[count, 6] = column.Entity;
-                tableWorksheet.Cells[count, 7] = column.Description;
-                tableWorksheet.Cells[count, 8] = "";
-                count++;
-
-                columnCount++;
-            }
-
-            Range range = tableWorksheet.Cells[5, 1];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
-
-            tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableWorksheet.Columns.AutoFit();
-
-            Marshal.ReleaseComObject(tableWorksheet);
-        }
-
-        //*************************************************************************
-
-        // Creates a worksheet with table overview
-        private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
-        {
-            tableOverviewWorksheet.Name = "tables";
-
-            List<string> columnNames = new List<string>()
-            {
-                "table",
-                "folder",
-                "schema",
-                "rows",
-                "columns",
-                "priority",
-                "pri-sort",
-                "entity",
-                "description",
-                "note"
-            };
-
-            foreach (string name in columnNames)
-            {
-                tableOverviewWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
-            }
-            //-------------------------------------------------------------------
-            int count = 2;
-            foreach (Table table in schema.Tables)
-            {
-                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
-                GetEntity(table.Description, table);
-                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
-
-                if (priorities.Contains(table.TablePriority))
-                {
-                    if (includeTables)
-                    {
-                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
-                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
-                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
-
-                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
-                        links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
-
-                        Marshal.ReleaseComObject(c1);
-                        Marshal.ReleaseComObject(c2);
-                        Marshal.ReleaseComObject(linkCell);
-                        Marshal.ReleaseComObject(links);
-                    }
-                    else
-                    {
-                        tableOverviewWorksheet.Cells[count, 1] = table.Name;
-                    }
-
-                    tableOverviewWorksheet.Cells[count, 2] = table.Folder;
-                    tableOverviewWorksheet.Cells[count, 3] = schema.Name;
-                    tableOverviewWorksheet.Cells[count, 4] = table.Rows;
-                    tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
-                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
-                    tableOverviewWorksheet.Cells[count, 7] = "";
-                    tableOverviewWorksheet.Cells[count, 8] = table.TableEntity;
-                    tableOverviewWorksheet.Cells[count, 9] = table.Description;
-                    tableOverviewWorksheet.Cells[count, 10] = "";
-
-                    count++;
-                }
-            }
-
-            Range range = tableOverviewWorksheet.Cells[2, 1];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
-
-            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableOverviewWorksheet.Columns.AutoFit();
-
-            Marshal.ReleaseComObject(tableOverviewWorksheet);
-        }
-        //*************************************************************************
-
         // Creates a worksheet with information about the template.
         private void AddDBInfo(Worksheet DBWorkSheet, Template template)
         {
@@ -483,6 +233,272 @@ namespace KDRS_Metadata
 
             Marshal.ReleaseComObject(DBWorkSheet);
         }
+        //*************************************************************************
+        // Creates a worksheet with table overview
+        private void AddTableOverview(Worksheet tableOverviewWorksheet, Schema schema, List<string> priorities)
+        {
+            tableOverviewWorksheet.Name = "tables";
+
+            List<string> columnNames = new List<string>()
+            {
+                "table",
+                "folder",
+                "schema",
+                "rows",
+                "columns",
+                "priority",
+                "pri-sort",
+                "entity",
+                "description",
+                "note"
+            };
+
+            foreach (string name in columnNames)
+            {
+                tableOverviewWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
+            }
+            //-------------------------------------------------------------------
+            int count = 2;
+            foreach (Table table in schema.Tables)
+            {
+                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+                GetEntity(table.Description, table);
+                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+
+                if (priorities.Contains(table.TablePriority))
+                {
+                    if (includeTables)
+                    {
+                        Range c1 = tableOverviewWorksheet.Cells[count, 1];
+                        Range c2 = tableOverviewWorksheet.Cells[count, 1];
+                        Range linkCell = tableOverviewWorksheet.get_Range(c1, c2);
+
+                        Hyperlinks links = tableOverviewWorksheet.Hyperlinks;
+                        links.Add(linkCell, "", GetNumbers(table.Folder) + "!A1", "", table.Name);
+
+                        Marshal.ReleaseComObject(c1);
+                        Marshal.ReleaseComObject(c2);
+                        Marshal.ReleaseComObject(linkCell);
+                        Marshal.ReleaseComObject(links);
+                    }
+                    else
+                    {
+                        tableOverviewWorksheet.Cells[count, 1] = table.Name;
+                    }
+
+                    tableOverviewWorksheet.Cells[count, 2] = table.Folder;
+                    tableOverviewWorksheet.Cells[count, 3] = schema.Name;
+                    tableOverviewWorksheet.Cells[count, 4] = table.Rows;
+                    tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
+                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
+
+                    // Pri sort
+                    tableOverviewWorksheet.Cells[count, 7] = Globals.PriSort(table.TablePriority);
+                    tableOverviewWorksheet.Cells[count, 8] = table.TableEntity;
+                    tableOverviewWorksheet.Cells[count, 9] = table.Description;
+
+                    // Note
+                    tableOverviewWorksheet.Cells[count, 10] = "";
+
+                    count++;
+                }
+            }
+
+            Range range = tableOverviewWorksheet.Cells[2, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
+            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            tableOverviewWorksheet.Columns.AutoFit();
+
+            Marshal.ReleaseComObject(tableOverviewWorksheet);
+        }
+        //*************************************************************************
+        // Creates a worksheet with information for each table
+        private void AddTable(Worksheet tableWorksheet, Schema schema, Table table)
+        {
+            Console.WriteLine("Table: " + table.Name);
+            tableWorksheet.Name = GetNumbers(table.Folder);
+
+            Range c1 = tableWorksheet.Cells[1, 1];
+            Range c2 = tableWorksheet.Cells[1, 1];
+            Range linkCell = tableWorksheet.get_Range(c1, c2);
+
+            Hyperlinks links = tableWorksheet.Hyperlinks;
+
+            links.Add(linkCell, "", "tables!A1", "", "column <<< tables");
+
+            //tableWorksheet.Name = table.Name;
+
+            List<string> columnNames = new List<string>()
+            {
+                "column",
+                "name",
+                "type",
+                "typeOrginal",
+                "nullable",
+                "defaultValue",
+                "lobFolder",
+                "entity",
+                "description",
+                "note"
+            };
+
+            foreach (string name in columnNames.Skip(1))
+            {
+                tableWorksheet.Cells[1, columnNames.IndexOf(name) + 1] = name;
+            }
+            //-------------------------------------------------------------------
+
+            string[][] rowNamesArray = new string[9][] {
+                new string[2] { "schemaName", schema.Name },
+                new string[2] { "schemaFolder", schema.Folder},
+                new string[2] { "tableName", table.Name },
+                new string[2] { "tableFolder", table.Folder },
+                new string[2] { "tablePriority", table.TablePriority },
+                new string[2] { "tableEntity", table.TableEntity },
+                new string[2] { "tableDescription", table.Description },
+                new string[2] { "rows", table.Rows.ToString() },
+                new string[2] { "columns", table.Columns.Count().ToString() },
+            };
+
+            int count = 2;
+
+            foreach (string[] rn in rowNamesArray)
+            {
+                tableWorksheet.Cells[count, 1] = rn;
+                tableWorksheet.Cells[count, 2] = rn[1];
+                count++;
+            }
+            // Primary keys
+            if (table.PrimaryKey != null)
+            {
+                tableWorksheet.Cells[count, 1] = "pkName";
+                tableWorksheet.Cells[count, 2] = table.PrimaryKey.Name;
+                count++;
+
+                if (table.PrimaryKey.Columns != null)
+                {
+                    foreach (string column in table.PrimaryKey.Columns)
+                    {
+                        tableWorksheet.Cells[count, 1] = "pkColumn";
+                        tableWorksheet.Cells[count, 2] = column;
+                        count++;
+                    }
+                }
+
+                tableWorksheet.Cells[count, 1] = "pkDescription";
+                tableWorksheet.Cells[count, 2] = table.PrimaryKey.Description;
+                count++;
+            }
+            Console.WriteLine("fKEYS");
+
+            // Foreign keys
+            if (table.ForeignKeys != null)
+            {
+                foreach (ForeignKey fkey in table.ForeignKeys)
+                {
+                    tableWorksheet.Cells[count, 1] = "fkName";
+                    tableWorksheet.Cells[count, 2] = fkey.Name;
+                    count++;
+
+                    if (fkey.Columns != null)
+                    {
+                        foreach (string column in fkey.Columns)
+                        {
+                            tableWorksheet.Cells[count, 1] = "fkColumn";
+                            tableWorksheet.Cells[count, 2] = column;
+                            count++;
+                        }
+                    }
+                    
+                    tableWorksheet.Cells[count, 1] = "fkRefSchema";
+                    tableWorksheet.Cells[count, 2] = fkey.ReferencedSchema;
+                    count++;
+                    
+                    tableWorksheet.Cells[count, 1] = "fkRefTable";
+                    tableWorksheet.Cells[count, 2] = fkey.ReferencedTable;
+                    count++;
+
+                    if (fkey.ReferencedColumns != null)
+                    {
+                        foreach (string column in fkey.ReferencedColumns)
+                        {
+                            tableWorksheet.Cells[count, 1] = "fkReferencedColumns";
+                            tableWorksheet.Cells[count, 2] = column;
+                            count++;
+                        }
+                    }
+                    
+                    tableWorksheet.Cells[count, 1] = "fkDescription";
+                    tableWorksheet.Cells[count, 2] = fkey.Description;
+                    count++;
+                    
+                    tableWorksheet.Cells[count, 1] = "fkDeleteAction";
+                    tableWorksheet.Cells[count, 2] = fkey.DeleteAction;
+                    count++;
+
+                    tableWorksheet.Cells[count, 1] = "fkUpdateAction";
+                    tableWorksheet.Cells[count, 2] = fkey.UpdateAction;
+                    count++;
+                }
+            }
+            Console.WriteLine("cKEYS");
+
+            // Candidate keys
+            if (table.CandidateKeys != null)
+            {
+                foreach (CandidateKey ckey in table.CandidateKeys)
+                {
+                    tableWorksheet.Cells[count, 1] = "ckName";
+                    tableWorksheet.Cells[count, 2] = ckey.Name;
+                    count++;
+
+                    if (ckey.Columns != null)
+                    {
+                        foreach (string column in ckey.Columns)
+                        {
+                            tableWorksheet.Cells[count, 1] = "ckColumn";
+                            tableWorksheet.Cells[count, 2] = column;
+                            count++;
+                        }
+                    }
+
+                    tableWorksheet.Cells[count, 1] = "ckDescription";
+                    tableWorksheet.Cells[count, 2] = ckey.Description;
+                    count++;
+                }
+            }
+
+            // Columns
+            int columnCount = 1;
+            foreach (Column column in table.Columns)
+            {
+                GetEntity(column.Description, null, column);
+
+                tableWorksheet.Cells[count, 1] = columnCount;
+                tableWorksheet.Cells[count, 2] = column.Name;
+                tableWorksheet.Cells[count, 3] = column.Datatype;
+                tableWorksheet.Cells[count, 4] = column.Nullable;
+                tableWorksheet.Cells[count, 5] = column.Folder;
+                tableWorksheet.Cells[count, 6] = column.Entity;
+                tableWorksheet.Cells[count, 7] = column.Description;
+                tableWorksheet.Cells[count, 8] = "";
+                count++;
+
+                columnCount++;
+            }
+
+            Range range = tableWorksheet.Cells[5, 1];
+            range.Activate();
+            range.Application.ActiveWindow.FreezePanes = true;
+
+            tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            tableWorksheet.Columns.AutoFit();
+
+            Marshal.ReleaseComObject(tableWorksheet);
+        }
+        
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         private static string GetNumbers(string input)
@@ -549,8 +565,8 @@ namespace KDRS_Metadata
 
             return fileName;
         }
-    }
 
+    }
     //====================================================================================
 
     public class Template
