@@ -33,7 +33,7 @@
                             <typeOriginal>int</typeOriginal>
                             <nullable>false</nullable>
                             <defaultValue>0</defaultValue>
-                            <description/>
+                            <description>testdb04 with 6 tables and total 514 rows of data, 9 documents in table BLOB col/field. Extracted BLOB-documents saved inside .SIARD (internal)</description>
                         </column>
                         <column>
                             <name>arkivskaperID</name>
