@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 namespace KDRS_Metadata
@@ -61,6 +62,7 @@ namespace KDRS_Metadata
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, schemas, nsmgr, includeTables);
+
             Marshal.ReleaseComObject(tableOverviewWorksheet);
 
             Console.WriteLine("Added tableoverview");
@@ -102,10 +104,10 @@ namespace KDRS_Metadata
                 Console.WriteLine(excelFileName);
             }
 
-            string checkedFileNAme = checkFileName(excelFileName, fileCounter);
+            excelFileName = checkFileName(excelFileName, fileCounter);
             //Console.WriteLine("Outfile: " + checkedFileNAme);
                        
-            xlWorkBook.SaveAs(checkedFileNAme);
+            xlWorkBook.SaveAs(excelFileName);
 
             xlApp1.UseSystemSeparators = true;
 
@@ -165,6 +167,7 @@ namespace KDRS_Metadata
             // toolVersion
             DBWorkSheet.Cells[cnt, 1] = fieldNames[1];
             DBWorkSheet.Cells[cnt, 2] = Globals.toolVersion;
+            DBWorkSheet.Cells[cnt, 2].NumberFormat = "@";
             cnt++;
 
             for (int i=2; i<7; i++)
@@ -196,6 +199,7 @@ namespace KDRS_Metadata
 
             DBWorkSheet.Cells[cnt, 1] = fieldNames[10];
             DBWorkSheet.Cells[cnt, 2] = table.Attributes["version"].Value;
+            DBWorkSheet.Cells[cnt, 2].NumberFormat = "@";
             cnt++;
 
             for (int i = 11; i < 20; i++)
@@ -349,8 +353,16 @@ namespace KDRS_Metadata
 
                     tableOverviewWorksheet.Cells[count, 6] = tablePriority;
 
-                    int tablePriSort = Globals.PriSort(tablePriority);
-                    tableOverviewWorksheet.Cells[count, 7] = tablePriSort;
+                    /* int tablePriSort = Globals.PriSort(tablePriority);
+                     tableOverviewWorksheet.Cells[count, 7] = tablePriSort;
+                     */
+
+                    string table_entity = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
+                    tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_entity, "entity");
+
+                    string table_description = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
+                    tableOverviewWorksheet.Cells[count, 9] = ExtractEntity(table_description, "description");
+
                     count++;
                 }
             }
@@ -361,6 +373,25 @@ namespace KDRS_Metadata
 
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
+
+            tableOverviewWorksheet.Columns["B:B"].ColumnWidth = 8;
+            tableOverviewWorksheet.Columns["C:C"].ColumnWidth = 8;
+            tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 8;
+
+            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 14;
+
+            tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
+            tableOverviewWorksheet.Columns["I:I"].WrapText = true;
+
+            tableOverviewWorksheet.Columns["J:J"].ColumnWidth = 60;
+            tableOverviewWorksheet.Columns["J:J"].WrapText = true;
+
+            tableOverviewWorksheet.Sort.SortFields.Clear();
+
+            tableOverviewWorksheet.Sort.SortFields.Add(tableOverviewWorksheet.Range["F:F"], XlSortOn.xlSortOnValues, XlSortOrder.xlAscending, "HIGH, MEDIUM, LOW, SYSTEM, STATS, EMPTY, DUMMY", XlSortDataOption.xlSortNormal);
+            tableOverviewWorksheet.Sort.SetRange(tableOverviewWorksheet.UsedRange);
+            tableOverviewWorksheet.Sort.Header = XlYesNoGuess.xlYes;
+            tableOverviewWorksheet.Sort.Apply();
 
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
@@ -413,11 +444,11 @@ namespace KDRS_Metadata
 
             string tableRows = getInnerText(table["rows"]);
 
-            string tablePriority = GetNodeText(table, "descendant::siard:priority", nsmgr);
+            string tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
             if (tableRows == "0")
                 tablePriority = "EMPTY";
 
-            string tableEntity = GetNodeTxtEmpty(table, "descendant::siard:entity", nsmgr);
+           // string tableEntity = GetNodeTxtEmpty(table, "descendant::siard:entity", nsmgr);
 
             string[][] rowNamesArray = new string[12][] {
                 new string[2] { "schemaName", table.ParentNode.ParentNode["name"].InnerText.ToString() },
@@ -425,8 +456,8 @@ namespace KDRS_Metadata
                 new string[2] { "tableName", table["name"].InnerText.ToString() },
                 new string[2] { "tableFolder", getInnerText(table["folder"]) },
                 new string[2] { "tablePriority", tablePriority },
-                new string[2] { "tableEntity", tableEntity },
-                new string[2] { "tableDescription", table_description },
+                new string[2] { "tableEntity", ExtractEntity(table_description, "entity")},
+                new string[2] { "tableDescription", ExtractEntity(table_description, "description")},
                 new string[2] { "rows", tableRows },
                 new string[2] { "columns", getChildCount(table["columns"]) },
                 new string[2] { "pkName", primaryKey_name },
@@ -454,7 +485,7 @@ namespace KDRS_Metadata
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_name;
                     cellCount++;
 
-                    string foreignKeys_ref_schema = GetNodeText(fKey, "descendant::siard:referencedSchema", nsmgr);
+                    string foreignKeys_ref_schema = GetNodeTxtEmpty(fKey, "descendant::siard:referencedSchema", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkRefSchema";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_ref_schema;
                     cellCount++;
@@ -551,15 +582,19 @@ namespace KDRS_Metadata
                     string col_defaultValue = GetNodeText(column, "descendant::siard:defaultValue", nsmgr);
                     tableWorksheet.Cells[cellCount, 6] = col_defaultValue;
 
-                    string col_lobFolder = GetNodeText(column, "descendant::siard:lobFolder", nsmgr);
+                    string col_lobFolder = GetNodeTxtEmpty(column, "descendant::siard:lobFolder", nsmgr);
                     tableWorksheet.Cells[cellCount, 7] = col_lobFolder;
 
-                    string col_entity = GetNodeText(column, "descendant::siard:entity", nsmgr);
-                    tableWorksheet.Cells[cellCount, 8] = col_lobFolder;
+                    string col_entity = GetNodeTxtEmpty(column, "descendant::siard:description", nsmgr);
+                    string col_entity_extr = ExtractEntity(col_entity, "entity");
+                    tableWorksheet.Cells[cellCount, 8] = col_entity_extr;
 
                     string col_description = GetNodeTxtEmpty(column, "descendant::siard:description", nsmgr);
-                    tableWorksheet.Cells[cellCount, 9] = col_description;
+                    string col_description_extr = ExtractEntity(col_description, "description");
+                    tableWorksheet.Cells[cellCount, 9] = col_description_extr;
 
+                    string col_note = GetNodeTxtEmpty(column, "descendant::siard:note", nsmgr);
+                    tableWorksheet.Cells[cellCount, 10] = col_note;
                     cellCount++;
                 }
             }
@@ -666,6 +701,41 @@ namespace KDRS_Metadata
             }
 
             return fileName;
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        // Extracts entities from the description, returns the entities or description depending on target type
+        private string ExtractEntity(string description, string targetType)
+        {
+            Regex regex = new Regex(@"(?<entity1>(?<=\{)[^\{\}]+(?=\}))|(?<entity2>(?<=\[)[^\[\]]+(?=\]))|(?<desc>\w+.*)");
+
+            string entities = "";
+            string cleanDescription = "";
+
+            if (description != null)
+            {
+                foreach (Match m in regex.Matches(description))
+                {
+                    if (m.Groups["entity1"].Value != "")
+                    {
+                        entities += "{" + m.Groups["entity1"].Value + "}";
+                    }
+
+                    if (m.Groups["entity2"].Value != "")
+                    {
+                        entities += "[" + m.Groups["entity2"].Value + "]";
+                    }
+
+                    if (m.Groups["desc"].Value != "")
+                    {
+                        cleanDescription += m.Groups["desc"].Value;
+                    }
+                }
+            }
+
+            if (targetType == "entity")
+                return entities;
+
+            return cleanDescription;
         }
     }
     //==========================================================================================================

@@ -64,6 +64,10 @@ namespace KDRS_Metadata
             AddDBInfo(templateSheet, template);
             Marshal.ReleaseComObject(templateSheet);
 
+            //Sort tables by priority
+            List<string> sortOrder = new List<string> { "HIGH", "MEDIUM", "LOW", "SYSTEM", "STATS", "EMPTY", "DUMMY", null };
+            template.TemplateSchema.Tables.Sort((a, b) => sortOrder.IndexOf(a.TablePriority) - sortOrder.IndexOf(b.TablePriority));
+
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, template.TemplateSchema, priorities);
             Marshal.ReleaseComObject(tableOverviewWorksheet);
@@ -113,7 +117,8 @@ namespace KDRS_Metadata
 
             int fileCounter = 1;
 
-            xlWorkBook.SaveAs(checkFileName(excelFileName, fileCounter));
+            excelFileName = checkFileName(excelFileName, fileCounter);
+            xlWorkBook.SaveAs(excelFileName);
 
             Marshal.ReleaseComObject(xlWorkSheets);
 
@@ -228,6 +233,7 @@ namespace KDRS_Metadata
             DBWorkSheet.Cells[count2, 2] = date;
             DBWorkSheet.Cells[count2 + 1, 2] = template.TemplateVisibility;
 
+
             DBWorkSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             DBWorkSheet.Columns.AutoFit();
 
@@ -259,6 +265,7 @@ namespace KDRS_Metadata
             }
             //-------------------------------------------------------------------
             int count = 2;
+
             foreach (Table table in schema.Tables)
             {
                 Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
@@ -293,12 +300,12 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
 
                     // Pri sort
-                    tableOverviewWorksheet.Cells[count, 7] = Globals.PriSort(table.TablePriority);
-                    tableOverviewWorksheet.Cells[count, 8] = table.TableEntity;
-                    tableOverviewWorksheet.Cells[count, 9] = table.Description;
+                    //tableOverviewWorksheet.Cells[count, 7] = Globals.PriSort(table.TablePriority);
+                    tableOverviewWorksheet.Cells[count, 7] = table.TableEntity;
+                    tableOverviewWorksheet.Cells[count, 8] = table.Description;
 
                     // Note
-                    tableOverviewWorksheet.Cells[count, 10] = "";
+                    tableOverviewWorksheet.Cells[count, 9] = "";
 
                     count++;
                 }
@@ -310,6 +317,26 @@ namespace KDRS_Metadata
 
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
+
+            tableOverviewWorksheet.Columns["B:B"].ColumnWidth = 8;
+            tableOverviewWorksheet.Columns["C:C"].ColumnWidth = 8;
+            tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 8;
+
+            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 14;
+
+            tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
+            tableOverviewWorksheet.Columns["I:I"].WrapText = true;
+
+            tableOverviewWorksheet.Columns["J:J"].ColumnWidth = 60;
+            tableOverviewWorksheet.Columns["J:J"].WrapText = true;
+            /*
+            tableOverviewWorksheet.Sort.SortFields.Clear();
+
+            tableOverviewWorksheet.Sort.SortFields.Add(tableOverviewWorksheet.Range["F:F"] , XlSortOn.xlSortOnValues, XlSortOrder.xlAscending, "HIGH, MEDIUM, LOW, SYSTEM, STATS, EMPTY, DUMMY", XlSortDataOption.xlSortNormal);
+            tableOverviewWorksheet.Sort.SetRange(tableOverviewWorksheet.UsedRange);
+            tableOverviewWorksheet.Sort.Header = XlYesNoGuess.xlYes;
+           // tableOverviewWorksheet.Sort.Apply();
+           */
 
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
@@ -335,7 +362,7 @@ namespace KDRS_Metadata
                 "column",
                 "name",
                 "type",
-                "typeOrginal",
+                "typeOriginal",
                 "nullable",
                 "defaultValue",
                 "lobFolder",
@@ -479,11 +506,21 @@ namespace KDRS_Metadata
                 tableWorksheet.Cells[count, 1] = columnCount;
                 tableWorksheet.Cells[count, 2] = column.Name;
                 tableWorksheet.Cells[count, 3] = column.Datatype;
-                tableWorksheet.Cells[count, 4] = column.Nullable;
-                tableWorksheet.Cells[count, 5] = column.Folder;
-                tableWorksheet.Cells[count, 6] = column.Entity;
-                tableWorksheet.Cells[count, 7] = column.Description;
-                tableWorksheet.Cells[count, 8] = "";
+
+                //typeOriginal
+                tableWorksheet.Cells[count, 4] = "";
+
+                tableWorksheet.Cells[count, 5] = column.Nullable;
+                
+                //defaultValue
+                tableWorksheet.Cells[count, 6] = "";
+
+                tableWorksheet.Cells[count, 7] = column.Folder;
+                tableWorksheet.Cells[count, 8] = column.Entity;
+                tableWorksheet.Cells[count, 9] = column.Description;
+
+                //note
+                tableWorksheet.Cells[count, 10] = "";
                 count++;
 
                 columnCount++;
