@@ -177,6 +177,9 @@ namespace KDRS_Metadata
                 cnt++;
             }
 
+            Range tempRng = DBWorkSheet.Range["A1", "B1"];
+            tempRng.Characters.Font.Bold = true;
+
             Range redColorRng = DBWorkSheet.Range["A3", "C6"];
             redColorRng.Characters.Font.Color = Color.Red;
 
@@ -370,6 +373,9 @@ namespace KDRS_Metadata
             Range range = tableOverviewWorksheet.Cells[2, 1];
             range.Activate();
             range.Application.ActiveWindow.FreezePanes = true;
+
+            Range tempRng = tableOverviewWorksheet.Range["A1", "I1"];
+            tempRng.Characters.Font.Bold = true;
 
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
@@ -604,8 +610,13 @@ namespace KDRS_Metadata
             range.Activate();
             range.Application.ActiveWindow.FreezePanes = true;
 
+            Range tempRng = tableWorksheet.Range["A1", "J1"];
+            tempRng.Characters.Font.Bold = true;
+
             tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
+
+            tableWorksheet.Columns["B:B"].ColumnWidth = 30;
 
             tableWorksheet.Columns["I:I"].ColumnWidth = 60;
             tableWorksheet.Columns["I:I"].WrapText = true;
