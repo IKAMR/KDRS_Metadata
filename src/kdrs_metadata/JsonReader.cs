@@ -66,7 +66,7 @@ namespace KDRS_Metadata
 
             //Sort tables by priority
             List<string> sortOrder = new List<string> { "HIGH", "MEDIUM", "LOW", "SYSTEM", "STATS", "EMPTY", "DUMMY", null };
-            template.TemplateSchema.Tables.Sort((a, b) => sortOrder.IndexOf(a.TablePriority) - sortOrder.IndexOf(b.TablePriority));
+            // template.TemplateSchema.Tables.Sort((a, b) => sortOrder.IndexOf(a.TablePriority) - sortOrder.IndexOf(b.TablePriority));
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, template.TemplateSchema, priorities);
@@ -335,14 +335,13 @@ namespace KDRS_Metadata
 
             tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
             tableOverviewWorksheet.Columns["I:I"].WrapText = true;
-            /*
+            
             tableOverviewWorksheet.Sort.SortFields.Clear();
 
             tableOverviewWorksheet.Sort.SortFields.Add(tableOverviewWorksheet.Range["F:F"] , XlSortOn.xlSortOnValues, XlSortOrder.xlAscending, "HIGH, MEDIUM, LOW, SYSTEM, STATS, EMPTY, DUMMY", XlSortDataOption.xlSortNormal);
             tableOverviewWorksheet.Sort.SetRange(tableOverviewWorksheet.UsedRange);
             tableOverviewWorksheet.Sort.Header = XlYesNoGuess.xlYes;
-           // tableOverviewWorksheet.Sort.Apply();
-           */
+            tableOverviewWorksheet.Sort.Apply();
 
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
