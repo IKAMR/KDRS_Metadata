@@ -177,6 +177,9 @@ namespace KDRS_Metadata
                 cnt++;
             }
 
+            Range tempRng = DBWorkSheet.Range["A1", "B1"];
+            tempRng.Characters.Font.Bold = true;
+
             Range redColorRng = DBWorkSheet.Range["A3", "C6"];
             redColorRng.Characters.Font.Color = Color.Red;
 
@@ -284,7 +287,7 @@ namespace KDRS_Metadata
                 "rows",
                 "columns",
                 "priority",
-                "pri-sort",
+                // "pri-sort",
                 "entity",
                 "description",
                 "note"
@@ -358,10 +361,10 @@ namespace KDRS_Metadata
                      */
 
                     string table_entity = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
-                    tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_entity, "entity");
+                    tableOverviewWorksheet.Cells[count, 7] = ExtractEntity(table_entity, "entity");
 
                     string table_description = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
-                    tableOverviewWorksheet.Cells[count, 9] = ExtractEntity(table_description, "description");
+                    tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_description, "description");
 
                     count++;
                 }
@@ -371,6 +374,9 @@ namespace KDRS_Metadata
             range.Activate();
             range.Application.ActiveWindow.FreezePanes = true;
 
+            Range tempRng = tableOverviewWorksheet.Range["A1", "I1"];
+            tempRng.Characters.Font.Bold = true;
+
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
 
@@ -378,13 +384,13 @@ namespace KDRS_Metadata
             tableOverviewWorksheet.Columns["C:C"].ColumnWidth = 8;
             tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 8;
 
-            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 14;
+            tableOverviewWorksheet.Columns["G:G"].ColumnWidth = 14;
+
+            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 60;
+            tableOverviewWorksheet.Columns["H:H"].WrapText = true;
 
             tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
             tableOverviewWorksheet.Columns["I:I"].WrapText = true;
-
-            tableOverviewWorksheet.Columns["J:J"].ColumnWidth = 60;
-            tableOverviewWorksheet.Columns["J:J"].WrapText = true;
 
             tableOverviewWorksheet.Sort.SortFields.Clear();
 
@@ -599,12 +605,24 @@ namespace KDRS_Metadata
                 }
             }
 
-            Range range = tableWorksheet.Cells[5, 1];
+            // Range range = tableWorksheet.Cells[5, 1];
+            Range range = tableWorksheet.Cells[9, 3];
             range.Activate();
             range.Application.ActiveWindow.FreezePanes = true;
 
+            Range tempRng = tableWorksheet.Range["A1", "J1"];
+            tempRng.Characters.Font.Bold = true;
+
             tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
+
+            tableWorksheet.Columns["B:B"].ColumnWidth = 30;
+
+            tableWorksheet.Columns["I:I"].ColumnWidth = 60;
+            tableWorksheet.Columns["I:I"].WrapText = true;
+
+            tableWorksheet.Columns["J:J"].ColumnWidth = 60;
+            tableWorksheet.Columns["J:J"].WrapText = true;
 
             Marshal.ReleaseComObject(tableWorksheet);
         }

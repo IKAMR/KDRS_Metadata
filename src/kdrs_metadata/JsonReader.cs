@@ -66,7 +66,7 @@ namespace KDRS_Metadata
 
             //Sort tables by priority
             List<string> sortOrder = new List<string> { "HIGH", "MEDIUM", "LOW", "SYSTEM", "STATS", "EMPTY", "DUMMY", null };
-            template.TemplateSchema.Tables.Sort((a, b) => sortOrder.IndexOf(a.TablePriority) - sortOrder.IndexOf(b.TablePriority));
+            // template.TemplateSchema.Tables.Sort((a, b) => sortOrder.IndexOf(a.TablePriority) - sortOrder.IndexOf(b.TablePriority));
 
             Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
             AddTableOverview(tableOverviewWorksheet, template.TemplateSchema, priorities);
@@ -194,6 +194,9 @@ namespace KDRS_Metadata
             DBWorkSheet.Cells[6, 2] = template.SystemVersion;
             DBWorkSheet.Cells[7, 2] = "";
 
+            Range tempRng = DBWorkSheet.Range["A1", "B1"];
+            tempRng.Characters.Font.Bold = true;
+
             Range redColorRng = DBWorkSheet.Range["A3", "C6"];
             redColorRng.Characters.Font.Color = Color.Red;
 
@@ -253,7 +256,7 @@ namespace KDRS_Metadata
                 "rows",
                 "columns",
                 "priority",
-                "pri-sort",
+                // "pri-sort",
                 "entity",
                 "description",
                 "note"
@@ -315,6 +318,9 @@ namespace KDRS_Metadata
             range.Activate();
             range.Application.ActiveWindow.FreezePanes = true;
 
+            Range tempRng = tableOverviewWorksheet.Range["A1", "I1"];
+            tempRng.Characters.Font.Bold = true;
+
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableOverviewWorksheet.Columns.AutoFit();
 
@@ -322,21 +328,20 @@ namespace KDRS_Metadata
             tableOverviewWorksheet.Columns["C:C"].ColumnWidth = 8;
             tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 8;
 
-            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 14;
+            tableOverviewWorksheet.Columns["G:G"].ColumnWidth = 14;
+
+            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 60;
+            tableOverviewWorksheet.Columns["H:H"].WrapText = true;
 
             tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
             tableOverviewWorksheet.Columns["I:I"].WrapText = true;
-
-            tableOverviewWorksheet.Columns["J:J"].ColumnWidth = 60;
-            tableOverviewWorksheet.Columns["J:J"].WrapText = true;
-            /*
+            
             tableOverviewWorksheet.Sort.SortFields.Clear();
 
             tableOverviewWorksheet.Sort.SortFields.Add(tableOverviewWorksheet.Range["F:F"] , XlSortOn.xlSortOnValues, XlSortOrder.xlAscending, "HIGH, MEDIUM, LOW, SYSTEM, STATS, EMPTY, DUMMY", XlSortDataOption.xlSortNormal);
             tableOverviewWorksheet.Sort.SetRange(tableOverviewWorksheet.UsedRange);
             tableOverviewWorksheet.Sort.Header = XlYesNoGuess.xlYes;
-           // tableOverviewWorksheet.Sort.Apply();
-           */
+            tableOverviewWorksheet.Sort.Apply();
 
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
@@ -526,12 +531,24 @@ namespace KDRS_Metadata
                 columnCount++;
             }
 
-            Range range = tableWorksheet.Cells[5, 1];
+            // Range range = tableWorksheet.Cells[5, 1];
+            Range range = tableWorksheet.Cells[9, 3];
             range.Activate();
             range.Application.ActiveWindow.FreezePanes = true;
 
+            Range tempRng = tableWorksheet.Range["A1", "J1"];
+            tempRng.Characters.Font.Bold = true;
+
             tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
             tableWorksheet.Columns.AutoFit();
+
+            tableWorksheet.Columns["B:B"].ColumnWidth = 30;
+
+            tableWorksheet.Columns["I:I"].ColumnWidth = 60;
+            tableWorksheet.Columns["I:I"].WrapText = true;
+
+            tableWorksheet.Columns["J:J"].ColumnWidth = 60;
+            tableWorksheet.Columns["J:J"].WrapText = true;
 
             Marshal.ReleaseComObject(tableWorksheet);
         }

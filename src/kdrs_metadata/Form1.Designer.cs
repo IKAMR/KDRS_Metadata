@@ -51,10 +51,10 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 34);
-            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label1.Location = new System.Drawing.Point(17, 63);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(46, 13);
+            this.label1.Size = new System.Drawing.Size(77, 25);
             this.label1.TabIndex = 0;
             this.label1.Text = "             ";
             // 
@@ -63,10 +63,10 @@
             this.priorityHigh.AutoSize = true;
             this.priorityHigh.Checked = true;
             this.priorityHigh.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityHigh.Location = new System.Drawing.Point(8, 19);
-            this.priorityHigh.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityHigh.Location = new System.Drawing.Point(15, 35);
+            this.priorityHigh.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityHigh.Name = "priorityHigh";
-            this.priorityHigh.Size = new System.Drawing.Size(48, 17);
+            this.priorityHigh.Size = new System.Drawing.Size(78, 29);
             this.priorityHigh.TabIndex = 2;
             this.priorityHigh.Text = "High";
             this.priorityHigh.UseVisualStyleBackColor = true;
@@ -76,10 +76,10 @@
             this.priorityMedium.AutoSize = true;
             this.priorityMedium.Checked = true;
             this.priorityMedium.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityMedium.Location = new System.Drawing.Point(8, 41);
-            this.priorityMedium.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityMedium.Location = new System.Drawing.Point(15, 76);
+            this.priorityMedium.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityMedium.Name = "priorityMedium";
-            this.priorityMedium.Size = new System.Drawing.Size(63, 17);
+            this.priorityMedium.Size = new System.Drawing.Size(108, 29);
             this.priorityMedium.TabIndex = 3;
             this.priorityMedium.Text = "Medium";
             this.priorityMedium.UseVisualStyleBackColor = true;
@@ -89,10 +89,10 @@
             this.prioritySystem.AutoSize = true;
             this.prioritySystem.Checked = true;
             this.prioritySystem.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.prioritySystem.Location = new System.Drawing.Point(100, 19);
-            this.prioritySystem.Margin = new System.Windows.Forms.Padding(2);
+            this.prioritySystem.Location = new System.Drawing.Point(183, 35);
+            this.prioritySystem.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.prioritySystem.Name = "prioritySystem";
-            this.prioritySystem.Size = new System.Drawing.Size(60, 17);
+            this.prioritySystem.Size = new System.Drawing.Size(104, 29);
             this.prioritySystem.TabIndex = 4;
             this.prioritySystem.Text = "System";
             this.prioritySystem.UseVisualStyleBackColor = true;
@@ -102,10 +102,10 @@
             this.priorityEmpty.AutoSize = true;
             this.priorityEmpty.Checked = true;
             this.priorityEmpty.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityEmpty.Location = new System.Drawing.Point(100, 41);
-            this.priorityEmpty.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityEmpty.Location = new System.Drawing.Point(183, 76);
+            this.priorityEmpty.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityEmpty.Name = "priorityEmpty";
-            this.priorityEmpty.Size = new System.Drawing.Size(55, 17);
+            this.priorityEmpty.Size = new System.Drawing.Size(93, 29);
             this.priorityEmpty.TabIndex = 5;
             this.priorityEmpty.Text = "Empty";
             this.priorityEmpty.UseVisualStyleBackColor = true;
@@ -115,10 +115,10 @@
             this.priorityLow.AutoSize = true;
             this.priorityLow.Checked = true;
             this.priorityLow.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityLow.Location = new System.Drawing.Point(8, 63);
-            this.priorityLow.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityLow.Location = new System.Drawing.Point(15, 116);
+            this.priorityLow.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityLow.Name = "priorityLow";
-            this.priorityLow.Size = new System.Drawing.Size(46, 17);
+            this.priorityLow.Size = new System.Drawing.Size(74, 29);
             this.priorityLow.TabIndex = 6;
             this.priorityLow.Text = "Low";
             this.priorityLow.UseVisualStyleBackColor = true;
@@ -128,10 +128,10 @@
             this.priorityNull.AutoSize = true;
             this.priorityNull.Checked = true;
             this.priorityNull.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityNull.Location = new System.Drawing.Point(192, 17);
-            this.priorityNull.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityNull.Location = new System.Drawing.Point(352, 31);
+            this.priorityNull.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityNull.Name = "priorityNull";
-            this.priorityNull.Size = new System.Drawing.Size(42, 17);
+            this.priorityNull.Size = new System.Drawing.Size(68, 29);
             this.priorityNull.TabIndex = 7;
             this.priorityNull.Text = "null";
             this.priorityNull.UseVisualStyleBackColor = true;
@@ -148,11 +148,11 @@
             this.groupBox1.Controls.Add(this.prioritySystem);
             this.groupBox1.Controls.Add(this.priorityMedium);
             this.groupBox1.Controls.Add(this.priorityHigh);
-            this.groupBox1.Location = new System.Drawing.Point(11, 187);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
+            this.groupBox1.Location = new System.Drawing.Point(20, 345);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
-            this.groupBox1.Size = new System.Drawing.Size(286, 93);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Size = new System.Drawing.Size(524, 172);
             this.groupBox1.TabIndex = 8;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Table priorities";
@@ -162,10 +162,10 @@
             this.priorityDummy.AutoSize = true;
             this.priorityDummy.Checked = true;
             this.priorityDummy.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityDummy.Location = new System.Drawing.Point(192, 41);
-            this.priorityDummy.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityDummy.Location = new System.Drawing.Point(352, 76);
+            this.priorityDummy.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityDummy.Name = "priorityDummy";
-            this.priorityDummy.Size = new System.Drawing.Size(61, 17);
+            this.priorityDummy.Size = new System.Drawing.Size(105, 29);
             this.priorityDummy.TabIndex = 9;
             this.priorityDummy.Text = "Dummy";
             this.priorityDummy.UseVisualStyleBackColor = true;
@@ -175,10 +175,10 @@
             this.priorityStat.AutoSize = true;
             this.priorityStat.Checked = true;
             this.priorityStat.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.priorityStat.Location = new System.Drawing.Point(100, 63);
-            this.priorityStat.Margin = new System.Windows.Forms.Padding(2);
+            this.priorityStat.Location = new System.Drawing.Point(183, 116);
+            this.priorityStat.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.priorityStat.Name = "priorityStat";
-            this.priorityStat.Size = new System.Drawing.Size(45, 17);
+            this.priorityStat.Size = new System.Drawing.Size(73, 29);
             this.priorityStat.TabIndex = 8;
             this.priorityStat.Text = "Stat";
             this.priorityStat.UseVisualStyleBackColor = true;
@@ -188,9 +188,11 @@
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.groupBox2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.groupBox2.Controls.Add(this.includeTables);
-            this.groupBox2.Location = new System.Drawing.Point(303, 189);
+            this.groupBox2.Location = new System.Drawing.Point(556, 349);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(184, 91);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.groupBox2.Size = new System.Drawing.Size(337, 168);
             this.groupBox2.TabIndex = 10;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Tables";
@@ -200,9 +202,10 @@
             this.includeTables.AutoSize = true;
             this.includeTables.Checked = true;
             this.includeTables.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.includeTables.Location = new System.Drawing.Point(7, 15);
+            this.includeTables.Location = new System.Drawing.Point(13, 28);
+            this.includeTables.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.includeTables.Name = "includeTables";
-            this.includeTables.Size = new System.Drawing.Size(129, 17);
+            this.includeTables.Size = new System.Drawing.Size(226, 29);
             this.includeTables.TabIndex = 0;
             this.includeTables.Text = "Include table columns";
             this.includeTables.UseVisualStyleBackColor = true;
@@ -213,20 +216,22 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.textBox1.Location = new System.Drawing.Point(11, 50);
+            this.textBox1.Location = new System.Drawing.Point(20, 92);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox1.Size = new System.Drawing.Size(572, 99);
+            this.textBox1.Size = new System.Drawing.Size(1049, 183);
             this.textBox1.TabIndex = 11;
             // 
             // btnCopyLog
             // 
             this.btnCopyLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnCopyLog.Location = new System.Drawing.Point(13, 286);
+            this.btnCopyLog.Location = new System.Drawing.Point(24, 528);
+            this.btnCopyLog.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.btnCopyLog.Name = "btnCopyLog";
-            this.btnCopyLog.Size = new System.Drawing.Size(87, 27);
+            this.btnCopyLog.Size = new System.Drawing.Size(160, 50);
             this.btnCopyLog.TabIndex = 12;
             this.btnCopyLog.Text = "Copy log";
             this.btnCopyLog.UseVisualStyleBackColor = true;
@@ -235,9 +240,10 @@
             // btnSaveLog
             // 
             this.btnSaveLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnSaveLog.Location = new System.Drawing.Point(106, 286);
+            this.btnSaveLog.Location = new System.Drawing.Point(194, 528);
+            this.btnSaveLog.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.btnSaveLog.Name = "btnSaveLog";
-            this.btnSaveLog.Size = new System.Drawing.Size(87, 27);
+            this.btnSaveLog.Size = new System.Drawing.Size(160, 50);
             this.btnSaveLog.TabIndex = 13;
             this.btnSaveLog.Text = "Save log";
             this.btnSaveLog.UseVisualStyleBackColor = true;
@@ -246,17 +252,18 @@
             // Form1
             // 
             this.AllowDrop = true;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(596, 341);
+            this.ClientSize = new System.Drawing.Size(1093, 630);
             this.Controls.Add(this.btnSaveLog);
             this.Controls.Add(this.btnCopyLog);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label1);
+            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Name = "Form1";
-            this.Text = "KDRS Metadata v0.6";
+            this.Text = "KDRS Metadata vn.n";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
             this.groupBox1.ResumeLayout(false);
