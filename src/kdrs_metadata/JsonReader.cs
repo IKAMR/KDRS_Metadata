@@ -521,10 +521,24 @@ namespace KDRS_Metadata
                     }
                 }
 
-                tableWorksheet.Cells[cellCount, 1] = "pkDescription";
-                tableWorksheet.Cells[cellCount, 2] = table.PrimaryKey.Description;
+                // Entity
+                tableWorksheet.Cells[cellCount, 1] = "pkEntity";
+                string pk_extr_entity = ExtractEntity(table.PrimaryKey.Description, "entity");
+                tableWorksheet.Cells[cellCount, 2] = pk_extr_entity;
 
-                for (int n = 1; n < 9; n++)
+                for (int n = 1; n < 8; n++)
+                {
+                    tempRng = tableWorksheet.Cells[cellCount, n];
+                    tempRng.Interior.Color = Color.LightGreen;
+                }
+                cellCount++;
+
+                // Description
+                tableWorksheet.Cells[cellCount, 1] = "pkDescription";
+                string pk_extr_description = ExtractEntity(table.PrimaryKey.Description, "description");
+                tableWorksheet.Cells[cellCount, 2] = pk_extr_description;
+
+                for (int n = 1; n < 8; n++)
                 {
                     tempRng = tableWorksheet.Cells[cellCount, n];
                     tempRng.Interior.Color = Color.LightSkyBlue;
@@ -575,11 +589,25 @@ namespace KDRS_Metadata
                             cellCount++;
                         }
                     }
-                    
-                    tableWorksheet.Cells[cellCount, 1] = "fkDescription";
-                    tableWorksheet.Cells[cellCount, 2] = fkey.Description;
 
-                    for (int n = 1; n < 9; n++)
+                    // Entity
+                    tableWorksheet.Cells[cellCount, 1] = "fkEntity";
+                    string fk_extr_entity = ExtractEntity(fkey.Description, "entity");
+                    tableWorksheet.Cells[cellCount, 2] = fk_extr_entity;
+
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightGreen;
+                    }
+                    cellCount++;
+
+                    // Description
+                    tableWorksheet.Cells[cellCount, 1] = "fkDescription";
+                    string fk_extr_description = ExtractEntity(fkey.Description, "description");
+                    tableWorksheet.Cells[cellCount, 2] = fk_extr_description;
+
+                    for (int n = 1; n < 8; n++)
                     {
                         tempRng = tableWorksheet.Cells[cellCount, n];
                         tempRng.Interior.Color = Color.LightSkyBlue;
@@ -622,10 +650,24 @@ namespace KDRS_Metadata
                         }
                     }
 
-                    tableWorksheet.Cells[cellCount, 1] = "ckDescription";
-                    tableWorksheet.Cells[cellCount, 2] = ckey.Description;
+                    // Entity
+                    tableWorksheet.Cells[cellCount, 1] = "ckEntity";
+                    string ck_extr_entity = ExtractEntity(ckey.Description, "entity");
+                    tableWorksheet.Cells[cellCount, 2] = ck_extr_entity;
 
-                    for (int n = 1; n < 9; n++)
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightGreen;
+                    }
+                    cellCount++;
+
+                    // Description
+                    tableWorksheet.Cells[cellCount, 1] = "ckDescription";
+                    string ck_extr_description = ExtractEntity(ckey.Description, "description");
+                    tableWorksheet.Cells[cellCount, 2] = ck_extr_description;
+
+                    for (int n = 1; n < 8; n++)
                     {
                         tempRng = tableWorksheet.Cells[cellCount, n];
                         tempRng.Interior.Color = Color.LightSkyBlue;
@@ -888,6 +930,41 @@ namespace KDRS_Metadata
             }
 
             return fileName;
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        // Extracts entities from the description, returns the entities or description depending on target type
+        private string ExtractEntity(string description, string targetType)
+        {
+            Regex regex = new Regex(@"(?<entity1>(?<=\{)[^\{\}]+(?=\}))|(?<entity2>(?<=\[)[^\[\]]+(?=\]))|(?<desc>\w+.*)");
+
+            string entities = "";
+            string cleanDescription = "";
+
+            if (description != null)
+            {
+                foreach (Match m in regex.Matches(description))
+                {
+                    if (m.Groups["entity1"].Value != "")
+                    {
+                        entities += "{" + m.Groups["entity1"].Value + "}";
+                    }
+
+                    if (m.Groups["entity2"].Value != "")
+                    {
+                        entities += "[" + m.Groups["entity2"].Value + "]";
+                    }
+
+                    if (m.Groups["desc"].Value != "")
+                    {
+                        cleanDescription += m.Groups["desc"].Value;
+                    }
+                }
+            }
+
+            if (targetType == "entity")
+                return entities;
+
+            return cleanDescription;
         }
 
     }

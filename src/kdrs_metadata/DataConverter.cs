@@ -653,11 +653,16 @@ namespace KDRS_Metadata
                 tempRng = tableWorksheet.Cells[cellCount, 2];
                 tempRng.Interior.Color = Color.LightGray;
 
-                rowNamesArray = new string[3][] 
+                string pk_decription = GetNodeTxtEmpty(table["primaryKey"], "descendant::siard:description", nsmgr);
+                string pk_extr_entity = ExtractEntity(pk_decription, "entity");
+                string pk_extr_description = ExtractEntity(pk_decription, "description");
+                rowNamesArray = new string[4][] 
                 {
                     new string[2] { "pkName", primaryKey_name },
                     new string[2] { "pkColumn", primaryKey_column },
-                    new string[2] { "pkDescription", GetNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
+                    new string[2] { "pkEntity", pk_extr_entity},
+                    new string[2] { "pkDescription", pk_extr_description }
+                    // new string[2] { "pkDescription", GetNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
                 };
 
                 foreach (string[] rn in rowNamesArray)
@@ -667,8 +672,11 @@ namespace KDRS_Metadata
                     cellCount++;
                 }
 
-                for (int n = 1; n < 9; n++)
+                for (int n = 1; n < 8; n++)
                 {
+                    tempRng = tableWorksheet.Cells[cellCount - 2, n];
+                    tempRng.Interior.Color = Color.LightGreen;
+
                     tempRng = tableWorksheet.Cells[cellCount - 1, n];
                     tempRng.Interior.Color = Color.LightSkyBlue;
                 }
@@ -720,11 +728,23 @@ namespace KDRS_Metadata
                         }
                     }
 
-                    string foreignKeys_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
-                    tableWorksheet.Cells[cellCount, 1] = "fkDescription";
-                    tableWorksheet.Cells[cellCount, 2] = foreignKeys_description;
+                    string fk_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
+                    string fk_extr_entity = ExtractEntity(fk_description, "entity");
+                    string fk_extr_description = ExtractEntity(fk_description, "description");
+                    // string foreignKeys_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
 
-                    for (int n = 1; n < 9; n++)
+                    tableWorksheet.Cells[cellCount, 1] = "fkEntity";
+                    tableWorksheet.Cells[cellCount, 2] = fk_extr_entity;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightGreen;
+                    }
+                    cellCount++;
+
+                    tableWorksheet.Cells[cellCount, 1] = "fkDescription";
+                    tableWorksheet.Cells[cellCount, 2] = fk_extr_description;
+                    for (int n = 1; n < 8; n++)
                     {
                         tempRng = tableWorksheet.Cells[cellCount, n];
                         tempRng.Interior.Color = Color.LightSkyBlue;
@@ -761,9 +781,28 @@ namespace KDRS_Metadata
                     tableWorksheet.Cells[cellCount, 2] = candidateKeys_name;
                     cellCount++;
 
-                    string candidateKeys_description = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
-                    tableWorksheet.Cells[cellCount, 1] = "ckDescription ";
-                    tableWorksheet.Cells[cellCount, 2] = candidateKeys_description;
+                    string ck_description = GetNodeTxtEmpty(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
+                    string ck_extr_entity = ExtractEntity(ck_description, "entity");
+                    string ck_extr_description = ExtractEntity(ck_description, "description");
+                    // string candidateKeys_description = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
+
+                    tableWorksheet.Cells[cellCount, 1] = "ckEntity";
+                    tableWorksheet.Cells[cellCount, 2] = ck_extr_entity;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightGreen;
+                    }
+                    cellCount++;
+
+                    tableWorksheet.Cells[cellCount, 1] = "ckDescription";
+                    tableWorksheet.Cells[cellCount, 2] = ck_extr_description;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightSkyBlue;
+                    }
+                    cellCount++;
 
                     for (int n = 1; n < 9; n++)
                     {
