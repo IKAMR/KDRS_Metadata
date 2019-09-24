@@ -16,6 +16,7 @@ namespace KDRS_Metadata
         public int totalSchemaCount;
         public List<Schema> schemaNames = new List<Schema>();
         public string excelFileName;
+        public string siardVersion;
 
         public delegate void ProgressUpdate(int count, int totalCount);
         public event ProgressUpdate OnProgressUpdate;
@@ -40,16 +41,16 @@ namespace KDRS_Metadata
             nsmgr.AddNamespace("siard", nameSpace);
 
             Workbook xlWorkBook;
-            Sheets xlWorkSheets;
+            Sheets xlWorksheets;
 
             object misValue = System.Reflection.Missing.Value;
 
             xlWorkBook = xlWorkbooks.Add(misValue);
-            xlWorkSheets = xlWorkBook.Sheets;
+            xlWorksheets = xlWorkBook.Sheets;
 
-            Worksheet DBWorkSheet = xlWorkSheets.get_Item(1);
-            AddDBInfo(DBWorkSheet, root, nsmgr);
-            Marshal.ReleaseComObject(DBWorkSheet);
+            Worksheet DBWorksheet = xlWorksheets.get_Item(1);
+            AddDBInfo(DBWorksheet, root, nsmgr);
+            Marshal.ReleaseComObject(DBWorksheet);
 
             XmlNodeList schemas = root.SelectNodes("descendant::siard:schema", nsmgr);
             totalSchemaCount = schemas.Count;
@@ -60,7 +61,7 @@ namespace KDRS_Metadata
             int tableCount = 0;
             totalTableCount = allTables.Count;
 
-            Worksheet tableOverviewWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+            Worksheet tableOverviewWorksheet = xlWorksheets.Add(After: xlWorksheets[xlWorksheets.Count]);
             AddTableOverview(tableOverviewWorksheet, schemas, nsmgr, includeTables);
 
             Marshal.ReleaseComObject(tableOverviewWorksheet);
@@ -77,7 +78,7 @@ namespace KDRS_Metadata
                 {
                     foreach (XmlNode table in tables.ChildNodes)
                     {
-                        Worksheet tableWorksheet = xlWorkSheets.Add(After: xlWorkSheets[xlWorkSheets.Count]);
+                        Worksheet tableWorksheet = xlWorksheets.Add(After: xlWorksheets[xlWorksheets.Count]);
 
                         AddTable(tableWorksheet, table, nsmgr);
                         tableCount++;
@@ -121,10 +122,13 @@ namespace KDRS_Metadata
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        // Creates a worksheet with information about the database.
-        private void AddDBInfo(Worksheet DBWorkSheet, XmlNode table, XmlNamespaceManager nsmgr)
+        // Creates a Worksheet with information about the database.
+        private void AddDBInfo(Worksheet DBWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
-            DBWorkSheet.Name = "db";
+            Range tempRng;
+
+            DBWorksheet.Name = "db";
+            DBWorksheet.Columns.AutoFit();
 
             List<string> fieldNames = new List<string>()
             {
@@ -160,90 +164,139 @@ namespace KDRS_Metadata
             int cnt = 1;
 
             // toolname
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[0];
-            DBWorkSheet.Cells[cnt, 2] = Globals.toolName;
+            DBWorksheet.Cells[cnt, 1] = fieldNames[0];
+            DBWorksheet.Cells[cnt, 2] = Globals.toolName;
             cnt++;
 
             // toolVersion
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[1];
-            DBWorkSheet.Cells[cnt, 2] = Globals.toolVersion;
-            DBWorkSheet.Cells[cnt, 2].NumberFormat = "@";
+            DBWorksheet.Cells[cnt, 1] = fieldNames[1];
+            DBWorksheet.Cells[cnt, 2] = Globals.toolVersion;
+            DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
             cnt++;
 
             for (int i=2; i<7; i++)
             {
-                DBWorkSheet.Cells[cnt, 1] = fieldNames[i];
-                DBWorkSheet.Cells[cnt, 2] = "";
+                DBWorksheet.Cells[cnt, 1] = fieldNames[i];
+                DBWorksheet.Cells[cnt, 2] = "";
                 cnt++;
-            }
-
-            Range tempRng = DBWorkSheet.Range["A1", "B1"];
-            tempRng.Characters.Font.Bold = true;
-
-            Range redColorRng = DBWorkSheet.Range["A3", "C6"];
-            redColorRng.Characters.Font.Color = Color.Red;
-
-            Range orangeColorRng = DBWorkSheet.Range["A7", "C7"];
-            orangeColorRng.Characters.Font.Color = Color.Orange;
+            }            
 
             //tableCount
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[7];
+            DBWorksheet.Cells[cnt, 1] = fieldNames[7];
             XmlNodeList  tableCount = table.SelectNodes("//siard:table", nsmgr);
-            DBWorkSheet.Cells[cnt, 2] = tableCount.Count;
+            DBWorksheet.Cells[cnt, 2] = tableCount.Count;
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[8];
-            DBWorkSheet.Cells[cnt, 2] = "";
+            // Blank row
+            DBWorksheet.Cells[cnt, 1] = fieldNames[8];
+            DBWorksheet.Cells[cnt, 2] = "";
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[9];
-            DBWorkSheet.Cells[cnt, 2] = "metadata.xml";
+            // SIARD metadata.xml
+            DBWorksheet.Cells[cnt, 1] = fieldNames[9];
+            DBWorksheet.Cells[cnt, 2] = "metadata.xml";
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[10];
-            DBWorkSheet.Cells[cnt, 2] = table.Attributes["version"].Value;
-            DBWorkSheet.Cells[cnt, 2].NumberFormat = "@";
+            // SIARD version
+            DBWorksheet.Cells[cnt, 1] = fieldNames[10];
+            DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+            siardVersion = table.Attributes["version"].Value;
+            DBWorksheet.Cells[cnt, 2] = siardVersion;
             cnt++;
 
             for (int i = 11; i < 20; i++)
             {
                 string field = fieldNames[i];
-                DBWorkSheet.Cells[cnt, 1] = field;
-                DBWorkSheet.Cells[cnt, 2] = GetNodeText(table, "//siard:" + field, nsmgr);
+                DBWorksheet.Cells[cnt, 1] = field;
+                if (i == 11)
+                {
+                    DBWorksheet.Cells[cnt, 2] = "**********";
+                }
+                else
+                {
+                    DBWorksheet.Cells[cnt, 2] = GetNodeText(table, "//siard:" + field, nsmgr);
+                }
+                    cnt++;
+            }
+
+            if ("2.1" == siardVersion)
+            {
+                //digestType
+                DBWorksheet.Cells[cnt, 1] = fieldNames[20];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = GetNodeText(table, "//siard:messageDigest/digestType", nsmgr);
+                cnt++;
+
+                //digest
+                DBWorksheet.Cells[cnt, 1] = fieldNames[21];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = GetNodeText(table, "//siard:messageDigest/digest", nsmgr);
+                cnt++;
+            }
+            else if ("2.0" == siardVersion)
+            {
+                //digestType
+                DBWorksheet.Cells[cnt, 1] = fieldNames[20];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = "";
+                cnt++;
+
+                //digest
+                DBWorksheet.Cells[cnt, 1] = fieldNames[21];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = GetNodeText(table, "//siard:messageDigest", nsmgr);
+                cnt++;
+            }
+            else if ("1.0" == siardVersion)
+            {
+                //digestType
+                DBWorksheet.Cells[cnt, 1] = fieldNames[20];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = "";
+                cnt++;
+
+                //digest
+                DBWorksheet.Cells[cnt, 1] = fieldNames[21];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = GetNodeText(table, "//siard:messageDigest", nsmgr);
+                cnt++;
+            }
+            else
+            {
+                //digestType
+                DBWorksheet.Cells[cnt, 1] = fieldNames[20];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = "SIARD version";
+                cnt++;
+
+                //digest
+                DBWorksheet.Cells[cnt, 1] = fieldNames[21];
+                DBWorksheet.Cells[cnt, 2].NumberFormat = "@";
+                DBWorksheet.Cells[cnt, 2] = "Unknown";
                 cnt++;
             }
 
-            //digestType
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[20];
-            DBWorkSheet.Cells[cnt, 2] = "";
-            cnt++;
-
-            //digest
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[21];
-            DBWorkSheet.Cells[cnt, 2] = "";
-            cnt++;
-
             //clientMachine
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[22];
-            DBWorkSheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[22], nsmgr));
+            DBWorksheet.Cells[cnt, 1] = fieldNames[22];
+            DBWorksheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[22], nsmgr));
             cnt++;
 
             //databaseProduct
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[23];
-            DBWorkSheet.Cells[cnt, 2] = GetNodeText(table, "//siard:" + fieldNames[23], nsmgr);
+            DBWorksheet.Cells[cnt, 1] = fieldNames[23];
+            DBWorksheet.Cells[cnt, 2] = GetNodeText(table, "//siard:" + fieldNames[23], nsmgr);
             cnt++;
 
             //connection
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[24];
-            DBWorkSheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[24], nsmgr));
+            DBWorksheet.Cells[cnt, 1] = fieldNames[24];
+            DBWorksheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[24], nsmgr));
             cnt++;
 
             //databaseUser
-            DBWorkSheet.Cells[cnt, 1] = fieldNames[25];
-            DBWorkSheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[25], nsmgr));
+            DBWorksheet.Cells[cnt, 1] = fieldNames[25];
+            DBWorksheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + fieldNames[25], nsmgr));
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = "schemas";
+            DBWorksheet.Cells[cnt, 1] = "schemas";
             XmlNodeList schemas = table.SelectNodes("//siard:schemas/siard:schema", nsmgr);
 
             string schemasList = GetNodeText(schemas[0], "descendant::siard:folder", nsmgr);
@@ -251,33 +304,93 @@ namespace KDRS_Metadata
             {
                 schemasList += ", " + GetNodeText(schemas[i], "descendant::siard:folder", nsmgr);
             }
-            DBWorkSheet.Cells[cnt, 2] = schemasList;
+            DBWorksheet.Cells[cnt, 2] = schemasList;
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = "users";
+            DBWorksheet.Cells[cnt, 1] = "users";
             XmlNode users = table.SelectSingleNode("//siard:users", nsmgr);
-            DBWorkSheet.Cells[cnt, 2] = getChildCount(users);
+            DBWorksheet.Cells[cnt, 2] = getChildCount(users);
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = "roles";
+            DBWorksheet.Cells[cnt, 1] = "roles";
             XmlNode roles = table.SelectSingleNode("//siard:roles", nsmgr);
-            DBWorkSheet.Cells[cnt, 2] = getChildCount(roles);
+            DBWorksheet.Cells[cnt, 2] = getChildCount(roles);
             cnt++;
 
-            DBWorkSheet.Cells[cnt, 1] = "privileges";
+            DBWorksheet.Cells[cnt, 1] = "privileges";
             XmlNode privileges = table.SelectSingleNode("//siard:privileges", nsmgr);
-            DBWorkSheet.Cells[cnt, 2] = getChildCount(privileges);
+            DBWorksheet.Cells[cnt, 2] = getChildCount(privileges);
 
-            DBWorkSheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            // Freeze Panes
+            tempRng = DBWorksheet.Cells[10, 1];
+            tempRng.Activate();
+            tempRng.Application.ActiveWindow.FreezePanes = true;
 
-            DBWorkSheet.Columns.AutoFit();
-            Marshal.ReleaseComObject(DBWorkSheet);
+            // Header rows bold, volor & background color
+            tempRng = DBWorksheet.Range["A1", "B1"];
+            tempRng.Characters.Font.Bold = true;
+            tempRng.Interior.Color = Color.LightGray;
+
+            tempRng = DBWorksheet.Range["A3", "B6"];
+            tempRng.Characters.Font.Color = Color.Red;
+
+            tempRng = DBWorksheet.Range["B3", "B6"];
+            tempRng.Interior.Color = Color.LightYellow;
+
+            tempRng = DBWorksheet.Range["A7", "B7"];
+            tempRng.Characters.Font.Color = Color.Orange;
+
+            tempRng = DBWorksheet.Range["B7", "B7"];
+            tempRng.Interior.Color = Color.LightSkyBlue;
+
+            tempRng = DBWorksheet.Range["A10", "B10"];
+            tempRng.Characters.Font.Bold = true;
+            tempRng.Interior.Color = Color.LightGray;
+
+            // Border lines
+            for (int m = 1; m < 9; m++)
+            {
+                for (int n = 1; n < 3; n++)
+                {
+                    tempRng = DBWorksheet.Cells[m, n];
+                    tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+                }
+            }
+
+            for (int m = 10; m < 31; m++)
+            {
+                for (int n = 1; n < 3; n++)
+                {
+                    tempRng = DBWorksheet.Cells[m, n];
+                    tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+                }
+            }
+
+            // Column widths
+            DBWorksheet.Columns["A:A"].ColumnWidth = 20;
+            DBWorksheet.Columns["B:B"].ColumnWidth = 120;
+            DBWorksheet.Columns["B:B"].WrapText = true;
+
+            // Alignment
+            DBWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
+            DBWorksheet.Columns.VerticalAlignment = XlVAlign.xlVAlignCenter;
+            Marshal.ReleaseComObject(DBWorksheet);
         }
+
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        // Creates a worksheet with table overview
+        // Creates a Worksheet with table overview
         private void AddTableOverview(Worksheet tableOverviewWorksheet, XmlNodeList schemas, XmlNamespaceManager nsmgr, bool includeTables)
         {
+            Range tempRng;
+
             tableOverviewWorksheet.Name = "tables";
+            tableOverviewWorksheet.Columns.AutoFit();
 
             List<string> columnNames = new List<string>()
             {
@@ -355,6 +468,7 @@ namespace KDRS_Metadata
                         tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
 
                     tableOverviewWorksheet.Cells[count, 6] = tablePriority;
+                    
 
                     /* int tablePriSort = Globals.PriSort(tablePriority);
                      tableOverviewWorksheet.Cells[count, 7] = tablePriSort;
@@ -362,7 +476,7 @@ namespace KDRS_Metadata
 
                     string table_entity = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
                     tableOverviewWorksheet.Cells[count, 7] = ExtractEntity(table_entity, "entity");
-
+                    
                     string table_description = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
                     tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_description, "description");
 
@@ -370,21 +484,69 @@ namespace KDRS_Metadata
                 }
             }
 
-            Range range = tableOverviewWorksheet.Cells[2, 1];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
+            // Freeze Panes
+            tempRng = tableOverviewWorksheet.Cells[2, 1];
+            tempRng.Activate();
+            tempRng.Application.ActiveWindow.FreezePanes = true;
 
-            Range tempRng = tableOverviewWorksheet.Range["A1", "I1"];
+            tempRng = tableOverviewWorksheet.Range["A1", "I1"];
             tempRng.Characters.Font.Bold = true;
 
+            // Border lines
+            for (int n = 1; n < 10; n++)                
+            {
+                if (n < 6)
+                {
+                    tempRng = tableOverviewWorksheet.Cells[1, n];
+                    tempRng.Interior.Color = Color.LightGray;
+                }
+
+                for (int m = 1; m < count; m++)
+                {
+                    tempRng = tableOverviewWorksheet.Cells[m, n];
+                    tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;                    
+                }
+            }
+
+            // Cell background color
+            for (int m = 1; m < count; m++)
+            {
+                tempRng = tableOverviewWorksheet.Cells[m, 6];
+                tempRng.Interior.Color = Color.LightYellow;
+
+                tempRng = tableOverviewWorksheet.Cells[m, 7];
+                tempRng.Interior.Color = Color.LightGreen;
+
+                tempRng = tableOverviewWorksheet.Cells[m, 8];
+                tempRng.Interior.Color = Color.LightSkyBlue;
+
+                tempRng = tableOverviewWorksheet.Cells[m, 9];
+                tempRng.Interior.Color = Color.LightGray;
+            }
+
+            // Alignment
             tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableOverviewWorksheet.Columns.AutoFit();
+            tableOverviewWorksheet.Columns.VerticalAlignment = XlVAlign.xlVAlignCenter;
 
-            tableOverviewWorksheet.Columns["B:B"].ColumnWidth = 8;
-            tableOverviewWorksheet.Columns["C:C"].ColumnWidth = 8;
-            tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 8;
+            // Column widths
+            tableOverviewWorksheet.Columns["A:A"].AutoFit();
+            tableOverviewWorksheet.Columns["B:B"].AutoFit();  // .ColumnWidth = 8;
+            tableOverviewWorksheet.Columns["C:C"].AutoFit();  // .ColumnWidth = 8;
 
-            tableOverviewWorksheet.Columns["G:G"].ColumnWidth = 14;
+            tableOverviewWorksheet.Columns["D:D"].AutoFit();
+            tableOverviewWorksheet.Columns["D:D"].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+
+            tableOverviewWorksheet.Columns["E:E"].AutoFit();
+            tableOverviewWorksheet.Columns["E:E"].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+
+            tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 10;
+            tableOverviewWorksheet.Columns["F:F"].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+
+            tableOverviewWorksheet.Columns["G:G"].ColumnWidth = 20;
+            tableOverviewWorksheet.Columns["G:G"].WrapText = true;
 
             tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 60;
             tableOverviewWorksheet.Columns["H:H"].WrapText = true;
@@ -392,25 +554,30 @@ namespace KDRS_Metadata
             tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
             tableOverviewWorksheet.Columns["I:I"].WrapText = true;
 
+            // Column sorting
             tableOverviewWorksheet.Sort.SortFields.Clear();
 
             tableOverviewWorksheet.Sort.SortFields.Add(tableOverviewWorksheet.Range["F:F"], XlSortOn.xlSortOnValues, XlSortOrder.xlAscending, "HIGH, MEDIUM, LOW, SYSTEM, STATS, EMPTY, DUMMY", XlSortDataOption.xlSortNormal);
             tableOverviewWorksheet.Sort.SetRange(tableOverviewWorksheet.UsedRange);
             tableOverviewWorksheet.Sort.Header = XlYesNoGuess.xlYes;
             tableOverviewWorksheet.Sort.Apply();
-
+            
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
+
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        // Creates a worksheet with information for each table
+        // Creates a Worksheet with information for each table
         private void AddTable(Worksheet tableWorksheet, XmlNode table, XmlNamespaceManager nsmgr)
         {
+            Range tempRng;
+
             string schemaNumber = GetNumbers(table.ParentNode.ParentNode["folder"].InnerText);
 
             if (totalSchemaCount < 2)
                 tableWorksheet.Name = GetNumbers(table["folder"].InnerText);
             else 
                 tableWorksheet.Name = schemaNumber + "." + GetNumbers(table["folder"].InnerText);
+            tableWorksheet.Columns.AutoFit();
 
             Range c1 = tableWorksheet.Cells[1, 1];
             Range c2 = tableWorksheet.Cells[1, 1];
@@ -454,9 +621,11 @@ namespace KDRS_Metadata
             if (tableRows == "0")
                 tablePriority = "EMPTY";
 
-           // string tableEntity = GetNodeTxtEmpty(table, "descendant::siard:entity", nsmgr);
+            // string tableEntity = GetNodeTxtEmpty(table, "descendant::siard:entity", nsmgr);
 
-            string[][] rowNamesArray = new string[12][] {
+            // Table header
+            string[][] rowNamesArray = new string[9][] 
+            {
                 new string[2] { "schemaName", table.ParentNode.ParentNode["name"].InnerText.ToString() },
                 new string[2] { "schemaFolder", table.ParentNode.ParentNode["folder"].InnerText.ToString()},
                 new string[2] { "tableName", table["name"].InnerText.ToString() },
@@ -465,19 +634,54 @@ namespace KDRS_Metadata
                 new string[2] { "tableEntity", ExtractEntity(table_description, "entity")},
                 new string[2] { "tableDescription", ExtractEntity(table_description, "description")},
                 new string[2] { "rows", tableRows },
-                new string[2] { "columns", getChildCount(table["columns"]) },
-                new string[2] { "pkName", primaryKey_name },
-                new string[2] { "pkColumn", primaryKey_column },
-                new string[2] { "pkDescription", GetNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
+                new string[2] { "columns", getChildCount(table["columns"]) }
             };
 
             foreach (string[] rn in rowNamesArray)
             {
                 tableWorksheet.Cells[cellCount, 1] = rn;
                 tableWorksheet.Cells[cellCount, 2] = rn[1];
-
                 cellCount++;
             }
+
+            // Primary Key
+            if ("[NA]" != primaryKey_name)
+            {
+                tempRng = tableWorksheet.Cells[cellCount, 1];
+                tempRng.Interior.Color = Color.LightGray;
+
+                tempRng = tableWorksheet.Cells[cellCount, 2];
+                tempRng.Interior.Color = Color.LightGray;
+
+                string pk_decription = GetNodeTxtEmpty(table["primaryKey"], "descendant::siard:description", nsmgr);
+                string pk_extr_entity = ExtractEntity(pk_decription, "entity");
+                string pk_extr_description = ExtractEntity(pk_decription, "description");
+                rowNamesArray = new string[4][] 
+                {
+                    new string[2] { "pkName", primaryKey_name },
+                    new string[2] { "pkColumn", primaryKey_column },
+                    new string[2] { "pkEntity", pk_extr_entity},
+                    new string[2] { "pkDescription", pk_extr_description }
+                    // new string[2] { "pkDescription", GetNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
+                };
+
+                foreach (string[] rn in rowNamesArray)
+                {
+                    tableWorksheet.Cells[cellCount, 1] = rn;
+                    tableWorksheet.Cells[cellCount, 2] = rn[1];
+                    cellCount++;
+                }
+
+                for (int n = 1; n < 8; n++)
+                {
+                    tempRng = tableWorksheet.Cells[cellCount - 2, n];
+                    tempRng.Interior.Color = Color.LightGreen;
+
+                    tempRng = tableWorksheet.Cells[cellCount - 1, n];
+                    tempRng.Interior.Color = Color.LightSkyBlue;
+                }
+            }
+
             //-------------------------------------------------------------------------------------
             // Finds all foreign keys in table and prints to Excel.
             XmlNode foreignKeys = table.SelectSingleNode("descendant::siard:foreignKeys", nsmgr);
@@ -486,6 +690,12 @@ namespace KDRS_Metadata
             {
                 foreach (XmlNode fKey in foreignKeys.ChildNodes)
                 {
+                    tempRng = tableWorksheet.Cells[cellCount, 1];
+                    tempRng.Interior.Color = Color.LightPink;
+
+                    tempRng = tableWorksheet.Cells[cellCount, 2];
+                    tempRng.Interior.Color = Color.LightPink;
+
                     string foreignKeys_name = GetNodeText(fKey, "descendant::siard:name", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "fkName";
                     tableWorksheet.Cells[cellCount, 2] = foreignKeys_name;
@@ -518,9 +728,27 @@ namespace KDRS_Metadata
                         }
                     }
 
-                    string foreignKeys_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
+                    string fk_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
+                    string fk_extr_entity = ExtractEntity(fk_description, "entity");
+                    string fk_extr_description = ExtractEntity(fk_description, "description");
+                    // string foreignKeys_description = GetNodeTxtEmpty(fKey, "descendant::siard:description", nsmgr);
+
+                    tableWorksheet.Cells[cellCount, 1] = "fkEntity";
+                    tableWorksheet.Cells[cellCount, 2] = fk_extr_entity;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightGreen;
+                    }
+                    cellCount++;
+
                     tableWorksheet.Cells[cellCount, 1] = "fkDescription";
-                    tableWorksheet.Cells[cellCount, 2] = foreignKeys_description;
+                    tableWorksheet.Cells[cellCount, 2] = fk_extr_description;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightSkyBlue;
+                    }
                     cellCount++;
 
                     string foreignKeys_delete_action = GetNodeText(fKey, "descendant::siard:deleteAction", nsmgr);
@@ -542,14 +770,45 @@ namespace KDRS_Metadata
             {
                 foreach (XmlNode cKey in candidateKeys.ChildNodes)
                 {
+                    tempRng = tableWorksheet.Cells[cellCount, 1];
+                    tempRng.Interior.Color = Color.PaleTurquoise;
+
+                    tempRng = tableWorksheet.Cells[cellCount, 2];
+                    tempRng.Interior.Color = Color.PaleTurquoise;
+
                     string candidateKeys_name = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:name", nsmgr);
                     tableWorksheet.Cells[cellCount, 1] = "ckName ";
                     tableWorksheet.Cells[cellCount, 2] = candidateKeys_name;
                     cellCount++;
 
-                    string candidateKeys_description = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
-                    tableWorksheet.Cells[cellCount, 1] = "ckDescription ";
-                    tableWorksheet.Cells[cellCount, 2] = candidateKeys_description;
+                    string ck_description = GetNodeTxtEmpty(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
+                    string ck_extr_entity = ExtractEntity(ck_description, "entity");
+                    string ck_extr_description = ExtractEntity(ck_description, "description");
+                    // string candidateKeys_description = GetNodeText(table["candidateKeys"], "descendant::siard:candidateKey/siard:description", nsmgr);
+
+                    tableWorksheet.Cells[cellCount, 1] = "ckEntity";
+                    tableWorksheet.Cells[cellCount, 2] = ck_extr_entity;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightGreen;
+                    }
+                    cellCount++;
+
+                    tableWorksheet.Cells[cellCount, 1] = "ckDescription";
+                    tableWorksheet.Cells[cellCount, 2] = ck_extr_description;
+                    for (int n = 1; n < 8; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightSkyBlue;
+                    }
+                    cellCount++;
+
+                    for (int n = 1; n < 9; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Interior.Color = Color.LightSkyBlue;
+                    }
                     cellCount++;
 
                     for (int i=1; i<cKey.ChildNodes.Count; i++)
@@ -565,6 +824,41 @@ namespace KDRS_Metadata
             // Finds all columns in table and prints info to Excel.
             XmlNode tableColumns = table.SelectSingleNode("descendant::siard:columns", nsmgr);
 
+            // Repeat header row for visibility at top of first Table Column row
+            foreach (string name in columnNames.Skip(1))
+            {
+                tableWorksheet.Cells[cellCount, columnNames.IndexOf(name) + 1] = name;
+            }
+
+            // Repeat header row bold & border lines
+            for (int n = 1; n < 11; n++)
+            {
+                tempRng = tableWorksheet.Cells[cellCount, n];
+                tempRng.Characters.Font.Bold = true;
+                tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+
+                if (n < 8)
+                {
+                    tempRng.Interior.Color = Color.LightGray;
+                }
+            }
+
+            // Cell background color
+            tempRng = tableWorksheet.Cells[cellCount, 8];
+            tempRng.Interior.Color = Color.LightGreen;
+
+            tempRng = tableWorksheet.Cells[cellCount, 9];
+            tempRng.Interior.Color = Color.LightSkyBlue;
+
+            tempRng = tableWorksheet.Cells[cellCount, 10];
+            tempRng.Interior.Color = Color.LightGray;
+
+            cellCount++;
+
+            // Insert Table Column rows
             int column_count = 1;
             if (tableColumns != null)
             {
@@ -601,22 +895,123 @@ namespace KDRS_Metadata
 
                     string col_note = GetNodeTxtEmpty(column, "descendant::siard:note", nsmgr);
                     tableWorksheet.Cells[cellCount, 10] = col_note;
+
+                    // Border line
+                    for (int n = 1; n < 11; n++)
+                    {
+                        tempRng = tableWorksheet.Cells[cellCount, n];
+                        tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                        tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                        tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                        tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;                        
+                    }
+
+                    if ("" != col_lobFolder)
+                    {
+                        for (int n = 1; n < 8; n++)
+                        {
+                            tempRng = tableWorksheet.Cells[cellCount, n];
+                            tempRng.Interior.Color = Color.LightYellow;
+                        }
+                    }
+
+                    // Background color
+                    tempRng = tableWorksheet.Cells[cellCount, 8];
+                    tempRng.Interior.Color = Color.LightGreen;
+
+                    tempRng = tableWorksheet.Cells[cellCount, 9];
+                    tempRng.Interior.Color = Color.LightSkyBlue;
+
+                    tempRng = tableWorksheet.Cells[cellCount, 10];
+                    tempRng.Interior.Color = Color.LightGray;
+
                     cellCount++;
                 }
             }
 
             // Range range = tableWorksheet.Cells[5, 1];
-            Range range = tableWorksheet.Cells[9, 3];
-            range.Activate();
-            range.Application.ActiveWindow.FreezePanes = true;
+            tempRng = tableWorksheet.Cells[9, 3];
+            tempRng.Activate();
+            tempRng.Application.ActiveWindow.FreezePanes = true;
 
-            Range tempRng = tableWorksheet.Range["A1", "J1"];
+            // First row bold
+            tempRng = tableWorksheet.Range["A1", "J1"];
             tempRng.Characters.Font.Bold = true;
 
-            tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableWorksheet.Columns.AutoFit();
+            // Border lines            
+            for (int n = 1; n < 11; n++)
+            {
+                tempRng = tableWorksheet.Cells[1, n];
+                tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+                if (n < 8)
+                {
+                    tempRng.Interior.Color = Color.LightGray;
+                }
+            }
+
+            for (int m = 2; m < 8; m++)
+            {
+                for (int n = 1; n < 3; n++)
+                {
+                    tempRng = tableWorksheet.Cells[m, n];
+                    tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+                    tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+                }
+            }
+
+            // Cell background color            
+            tempRng = tableWorksheet.Cells[1, 8];
+            tempRng.Interior.Color = Color.LightGreen;
+
+            tempRng = tableWorksheet.Cells[1, 9];
+            tempRng.Interior.Color = Color.LightSkyBlue;
+
+            tempRng = tableWorksheet.Cells[1, 10];
+            tempRng.Interior.Color = Color.LightGray;
+
+            tempRng = tableWorksheet.Range["A6", "B6"];
+            tempRng.Interior.Color = Color.LightYellow;
+
+            tempRng = tableWorksheet.Range["A7", "J7"];
+            tempRng.Interior.Color = Color.LightGreen;            
+            // ToDo: Make Wrap Text expand to selected range, not only the single cell
+            // tempRng.WrapText = true;
+            // tempRng.Style.WrapText = true;
+            tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+            tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+            tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+            tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+
+            tempRng = tableWorksheet.Range["A8", "J8"];
+            tempRng.Interior.Color = Color.LightSkyBlue;
+            // ToDo: Make Wrap Text expand to selected range, not only the single cell
+            // tempRng.WrapText = true;
+            // tempRng.Style.WrapText = true;
+            tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
+            tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
+            tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
+            tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;
+
+            // Column widths
+            tableWorksheet.Columns["A:A"].AutoFit();
 
             tableWorksheet.Columns["B:B"].ColumnWidth = 30;
+
+            tableWorksheet.Columns["C:C"].AutoFit();
+            tableWorksheet.Columns["D:D"].AutoFit();
+            tableWorksheet.Columns["E:E"].AutoFit();
+            tableWorksheet.Columns["F:F"].AutoFit();
+
+            tableWorksheet.Columns["G:G"].AutoFit();  // .ColumnWidth = 26;
+            tableWorksheet.Columns["G:G"].WrapText = true;
+
+            tableWorksheet.Columns["H:H"].ColumnWidth = 30;
+            tableWorksheet.Columns["H:H"].WrapText = true;
 
             tableWorksheet.Columns["I:I"].ColumnWidth = 60;
             tableWorksheet.Columns["I:I"].WrapText = true;
@@ -624,6 +1019,9 @@ namespace KDRS_Metadata
             tableWorksheet.Columns["J:J"].ColumnWidth = 60;
             tableWorksheet.Columns["J:J"].WrapText = true;
 
+            // Alignment
+            tableWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;            
+            tableWorksheet.Columns.VerticalAlignment = XlVAlign.xlVAlignCenter;
             Marshal.ReleaseComObject(tableWorksheet);
         }
 

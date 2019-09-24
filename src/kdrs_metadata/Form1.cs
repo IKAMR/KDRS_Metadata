@@ -112,7 +112,7 @@ namespace KDRS_Metadata
         {
             base.Invoke((System.Action)delegate
             {
-                textBox1.Text = "Tables handled: " + value + " of " + total;
+                textBox1.Text = "Table " + value + " of " + total;
             });
         }
 
@@ -309,7 +309,7 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS Metadata";
-        public static readonly String toolVersion = "0.9.2";
+        public static readonly String toolVersion = "0.9.3";
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public static int PriSort(string priority)
