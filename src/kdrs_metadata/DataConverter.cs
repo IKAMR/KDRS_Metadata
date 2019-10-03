@@ -18,7 +18,20 @@ namespace KDRS_Metadata
         public string excelFileName;
         public string siardVersion;
 
-        public delegate void ProgressUpdate(int count, int totalCount);
+        public int thisSchemaNo;
+
+        // #1: Schema number [0..n]
+        // #2: Row counters number [0..1]
+        //     Total rows, Max rows one table
+        public int[,] arrayRowCounters = new int[30, 1];
+
+        // #1: Schema number [0..n]
+        // #2: Counter number [0..7]
+        //     PKs, FKs, CKs, noPKs, noFKs, noCKs, yesFKs, yesCKs
+        
+        public int[,] arrayKeysCounters = new int[30, 8];
+
+        public delegate void ProgressUpdate(int count, int totalCount, string progressPostfix);
         public event ProgressUpdate OnProgressUpdate;
 
         public void Convert(string filename, bool includeTables)
@@ -68,25 +81,40 @@ namespace KDRS_Metadata
 
             Console.WriteLine("Added tableoverview");
 
+            thisSchemaNo = 0;
             foreach (XmlNode schema in schemas)
             {
-                schemaNames.Add(new Schema(getInnerText(schema["name"]),getInnerText(schema["folder"])));
+                string schemaName = getInnerText(schema["name"]);
+                string schemaFolder = getInnerText(schema["folder"]);
+                schemaNames.Add(new Schema(getInnerText(schema["name"]), getInnerText(schema["folder"])));
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
                 Console.WriteLine("Enter schema");
+
+                for (int n = 0; n < 8; n++)
+                {
+                    arrayKeysCounters[thisSchemaNo, n] = 0;
+                }
 
                 if (includeTables)
                 {
                     foreach (XmlNode table in tables.ChildNodes)
                     {
+                        string tableName = getInnerText(table["name"]);
                         Worksheet tableWorksheet = xlWorksheets.Add(After: xlWorksheets[xlWorksheets.Count]);
 
                         AddTable(tableWorksheet, table, nsmgr);
                         tableCount++;
                         Console.WriteLine("Added table");
 
-                        OnProgressUpdate?.Invoke(tableCount, totalTableCount);
+                        OnProgressUpdate?.Invoke(tableCount, totalTableCount, schemaFolder + ": " + schemaName +"  |  "+ tableName);
                     }
                 }
+
+                for (int n = 0; n < 8; n++)
+                {
+                    Console.WriteLine(thisSchemaNo + "." + n + " = " + arrayKeysCounters[thisSchemaNo, n].ToString());
+                }
+                thisSchemaNo++;
             }
 
             xlWorkBook.Sheets[1].Select();
@@ -331,16 +359,16 @@ namespace KDRS_Metadata
             tempRng.Characters.Font.Bold = true;
             tempRng.Interior.Color = Color.LightGray;
 
-            tempRng = DBWorksheet.Range["A3", "B6"];
-            tempRng.Characters.Font.Color = Color.Red;
+            // tempRng = DBWorksheet.Range["A3", "B6"];
+            // tempRng.Characters.Font.Color = Color.Red;
 
-            tempRng = DBWorksheet.Range["B3", "B6"];
+            tempRng = DBWorksheet.Range["A3", "B6"];
             tempRng.Interior.Color = Color.LightYellow;
 
-            tempRng = DBWorksheet.Range["A7", "B7"];
-            tempRng.Characters.Font.Color = Color.Orange;
+            // tempRng = DBWorksheet.Range["A7", "B7"];
+            // tempRng.Characters.Font.Color = Color.Orange;
 
-            tempRng = DBWorksheet.Range["B7", "B7"];
+            tempRng = DBWorksheet.Range["A7", "B7"];
             tempRng.Interior.Color = Color.LightSkyBlue;
 
             tempRng = DBWorksheet.Range["A10", "B10"];
@@ -423,12 +451,12 @@ namespace KDRS_Metadata
             foreach (XmlNode schema in schemas)
             {
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
-                string schemaNumber = GetNumbers(schema["folder"].InnerText);
+                string schemaNumber = GetNumbers(schema["folder"].InnerText);                
 
                 foreach (XmlNode table in tables.ChildNodes)
                 {
                     string name = table["name"].InnerText;
-                    string folder = GetNumbers(table["folder"].InnerText);
+                    string folder = GetNumbers(table["folder"].InnerText);                    
                     if (includeTables)
                     {
                         Range c1 = tableOverviewWorksheet.Cells[count, 1];
@@ -469,7 +497,6 @@ namespace KDRS_Metadata
 
                     tableOverviewWorksheet.Cells[count, 6] = tablePriority;
                     
-
                     /* int tablePriSort = Globals.PriSort(tablePriority);
                      tableOverviewWorksheet.Cells[count, 7] = tablePriSort;
                      */
@@ -481,8 +508,8 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_description, "description");
 
                     count++;
-                }
-            }
+                }                
+            }            
 
             // Freeze Panes
             tempRng = tableOverviewWorksheet.Cells[2, 1];
@@ -616,6 +643,7 @@ namespace KDRS_Metadata
             string primaryKey_column = GetNodeText(table["primaryKey"], "descendant::siard:column", nsmgr);
 
             string tableRows = getInnerText(table["rows"]);
+            // thisRowCount += Int32.Parse(tableRows);
 
             string tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
             if (tableRows == "0")
@@ -645,8 +673,13 @@ namespace KDRS_Metadata
             }
 
             // Primary Key
-            if ("[NA]" != primaryKey_name)
+            if ("[NA]" == primaryKey_name)
             {
+                arrayKeysCounters[thisSchemaNo, 3]++;  // noPKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 0]++;  // PKs == (yesPKs)
                 tempRng = tableWorksheet.Cells[cellCount, 1];
                 tempRng.Interior.Color = Color.LightGray;
 
@@ -686,10 +719,16 @@ namespace KDRS_Metadata
             // Finds all foreign keys in table and prints to Excel.
             XmlNode foreignKeys = table.SelectSingleNode("descendant::siard:foreignKeys", nsmgr);
 
-            if (foreignKeys != null)
+            if (foreignKeys == null)
             {
+                arrayKeysCounters[thisSchemaNo, 4]++;  // noFKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 6]++;  // yesFKs
                 foreach (XmlNode fKey in foreignKeys.ChildNodes)
                 {
+                    arrayKeysCounters[thisSchemaNo, 1]++;  // FKs
                     tempRng = tableWorksheet.Cells[cellCount, 1];
                     tempRng.Interior.Color = Color.LightPink;
 
@@ -766,10 +805,16 @@ namespace KDRS_Metadata
             // Finds all candidate keys in table and prints to Excel.
             XmlNode candidateKeys = table.SelectSingleNode("descendant::siard:candidateKeys", nsmgr);
 
-            if (candidateKeys != null)
-            {
+            if (candidateKeys == null)
+            {                
+                arrayKeysCounters[thisSchemaNo, 5]++;  // noCKs
+            }
+            else
+            {                
+                arrayKeysCounters[thisSchemaNo, 7]++;  // yesCKs
                 foreach (XmlNode cKey in candidateKeys.ChildNodes)
                 {
+                    arrayKeysCounters[thisSchemaNo, 2]++;  // CKs
                     tempRng = tableWorksheet.Cells[cellCount, 1];
                     tempRng.Interior.Color = Color.PaleTurquoise;
 

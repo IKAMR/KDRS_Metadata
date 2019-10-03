@@ -247,6 +247,7 @@
             this.btnSaveLog.TabIndex = 13;
             this.btnSaveLog.Text = "Save log";
             this.btnSaveLog.UseVisualStyleBackColor = true;
+            this.btnSaveLog.Visible = false;
             this.btnSaveLog.Click += new System.EventHandler(this.btnSaveLog_Click);
             // 
             // Form1

@@ -23,7 +23,7 @@ namespace KDRS_Metadata
 
         List<string> resultList = new List<string>();
 
-        string inputFileName;
+        string inputFileName;        
 
         public Form1()
         {
@@ -104,15 +104,21 @@ namespace KDRS_Metadata
                 {
                     textBox1.AppendText("\r\n" + l);
                 }
+
+                string inputFolder = Path.GetDirectoryName(inputFileName);
+                string filename = Path.Combine(inputFolder, Path.GetFileNameWithoutExtension(inputFileName) + "_log_" + DateTime.Now.ToString("yyyy-MM-dd-HHmm") + ".txt");
+
+                File.WriteAllText(filename, textBox1.Text);
+
                 KillExcel();
             }
         }
 
-        private void reader_OnProgressUpdate(int value, int total)
+        private void reader_OnProgressUpdate(int value, int total, string countPostfix)
         {
             base.Invoke((System.Action)delegate
             {
-                textBox1.Text = "Table " + value + " of " + total;
+                textBox1.Text = "Table " + value + " of " + total + " [ " + countPostfix + " ]";
             });
         }
 
@@ -150,7 +156,9 @@ namespace KDRS_Metadata
 
                         foreach (Schema schema in jsonReader.schemaNames)
                         {
-                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
+                            string output = schema.Folder + ": " + schema.Name + ", rows: " + schema.rowsCount();
+                            // + ", PKs: " + schema.countPK() + ", FKs: " + schema.countFK() + ", CKs: " + schema.countCK();
+                            resultList.Add(output);
                         }
 
                         break;
@@ -166,11 +174,24 @@ namespace KDRS_Metadata
                         resultList.Add("Target: " + converter.excelFileName);
                         resultList.Add("Tables: " + converter.totalTableCount);
 
+                        int schemaNo = 0;
                         foreach (Schema schema in converter.schemaNames)
                         {
-                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
+                            string output = schema.Folder + ": " + schema.Name
+                                // + ",\tRows: " + converter.thisRowCount.ToString()
+                                + ",\tPKs: " + converter.arrayKeysCounters[schemaNo, 0].ToString()
+                                + ",\tFKs: " + converter.arrayKeysCounters[schemaNo, 1].ToString()
+                                + ",\tCKs: " + converter.arrayKeysCounters[schemaNo, 2].ToString()
+                                + ",\tnoPKs: " + converter.arrayKeysCounters[schemaNo, 3].ToString()
+                                + ",\tnoFKs: " + converter.arrayKeysCounters[schemaNo, 4].ToString()
+                                + ",\tnoCKs: " + converter.arrayKeysCounters[schemaNo, 5].ToString()
+                                + ",\tyesFKs: " + converter.arrayKeysCounters[schemaNo, 6].ToString()
+                                + ",\tyesCKs: " + converter.arrayKeysCounters[schemaNo, 7].ToString();                                                            
+                            resultList.Add(output);
+                            // + ", PKs: " + schema.countPK() + ", FKs: " + schema.countFK() + ", CKs: " + schema.countCK();
+                            // Console.WriteLine("Schema: " + schema.Name + ", rows: " + schema.rowsCount());
+                            schemaNo++;
                         }
-
                         
                         break;
                 }
@@ -309,7 +330,7 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS Metadata";
-        public static readonly String toolVersion = "0.9.3";
+        public static readonly String toolVersion = "0.9.4-rc1";
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public static int PriSort(string priority)

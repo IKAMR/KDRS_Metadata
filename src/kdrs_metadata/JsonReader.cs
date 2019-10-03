@@ -24,7 +24,7 @@ namespace KDRS_Metadata
 
         public bool includeTables;
 
-        public delegate void ProgressUpdate(int count, int totalCount);
+        public delegate void ProgressUpdate(int count, int totalCount, string progressPostfix);
         public event ProgressUpdate OnProgressUpdate;
 
         public void ParseJson(string filename, List<string> priorities, bool includeTables)
@@ -98,7 +98,7 @@ namespace KDRS_Metadata
                     }
                     tableCount++;
 
-                    OnProgressUpdate?.Invoke(tableCount, totalTableCount);
+                    OnProgressUpdate?.Invoke(tableCount, totalTableCount, template.TemplateSchema.Folder +": "+ template.TemplateSchema.Name +"  |  "+ table.Name);
                 }
             }
             xlWorkBook.Sheets[1].Select();
@@ -240,16 +240,16 @@ namespace KDRS_Metadata
             tempRng.Characters.Font.Bold = true;
             tempRng.Interior.Color = Color.LightGray;
 
-            tempRng = DBWorksheet.Range["A3", "B6"];
-            tempRng.Characters.Font.Color = Color.Red;
+            // tempRng = DBWorksheet.Range["A3", "B6"];
+            // tempRng.Characters.Font.Color = Color.Red;
 
-            tempRng = DBWorksheet.Range["B3", "B6"];
+            tempRng = DBWorksheet.Range["A3", "B6"];
             tempRng.Interior.Color = Color.LightYellow;
 
-            tempRng = DBWorksheet.Range["A7", "B7"];
-            tempRng.Characters.Font.Color = Color.Orange;
+            // tempRng = DBWorksheet.Range["A7", "B7"];
+            // tempRng.Characters.Font.Color = Color.Orange;
 
-            tempRng = DBWorksheet.Range["B7", "B7"];
+            tempRng = DBWorksheet.Range["A7", "B7"];
             tempRng.Interior.Color = Color.LightSkyBlue;
 
             tempRng = DBWorksheet.Range["A10", "B10"];
@@ -350,7 +350,10 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
                     tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
-                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
+                    if (table.TablePriority == "" && table.Rows == 0)
+                        tableOverviewWorksheet.Cells[count, 6] = "EMPTY";
+                    else
+                        tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
 
                     // Pri sort
                     //tableOverviewWorksheet.Cells[count, 7] = Globals.PriSort(table.TablePriority);
@@ -992,11 +995,54 @@ namespace KDRS_Metadata
             Name = name;
             Folder = folder;
         }
+        public int rowsCount()
+        {
+            int rows = 0;
+            foreach(Table table in Tables)
+            {
+                rows += table.Rows;
+            }
+            return rows;
+        }
+
+        // ToDo 2019-09-24 TFA TAA: Restructure Table as class for XML (DataConverter.cs)
+        // Now QuickFix parse add counters in the PK/FK/CK loops JSON & XML
+
+        /* public int countPK()
+        {
+            int countPK = 0;
+            foreach (Table table in Tables)
+            {
+                if (table.PrimaryKey != null)
+                    countPK++;
+            }
+            return countPK;
+        }
+        public int countFK()
+        {
+            int countFK = 0;
+            foreach (Table table in Tables)
+            {
+                if (table.ForeignKeys != null)
+                    countFK += table.ForeignKeys.Count;
+            }
+            return countFK;
+        }
+        public int countCK()
+        {
+            int countCK = 0;
+            foreach (Table table in Tables)
+            {
+                if (table.CandidateKeys != null)
+                    countCK += table.CandidateKeys.Count;
+            }
+            return countCK;
+        } */
 
         public List<Table> Tables { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public string Folder { get; set; }
+        public string Folder { get; set; }        
     }
 
     public class Table
