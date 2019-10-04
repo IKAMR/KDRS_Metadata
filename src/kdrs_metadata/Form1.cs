@@ -207,6 +207,15 @@ namespace KDRS_Metadata
                         }
                         
                         break;
+                    case ".xlsx":
+                        backgroundWorker1.ReportProgress(0, fileName);
+                        resultList.Add("Source: " + fileName);
+
+                        JsonTemplateWriter writer = new JsonTemplateWriter();
+
+                        writer.ReadXlsx(fileName);
+
+                        break;
                 }
                 e.Result = resultList;
             }
