@@ -24,11 +24,28 @@ namespace KDRS_Metadata
 
         public bool includeTables;
 
+        // Info: JSON template is pr. date only ONE schema
+        // Though keep array to make exact alike programming as metadata.xml multiple schemas
+        public int thisSchemaNo = 0;
+
+        // #1: Schema number [0..n]
+        // #2: Table counters number [0..2]
+        //     Total rows, Max rows one table, Max columns one table
+        public int[,] arrayTableCounters = new int[1, 3];
+
+        // #1: Schema number [0..0]
+        // #2: Counter number [0..7]
+        //     PKs, FKs, CKs, noPKs, noFKs, noCKs, yesFKs, yesCKs
+
+        public int[,] arrayKeysCounters = new int[1, 8];
+
         public delegate void ProgressUpdate(int count, int totalCount, string progressPostfix);
         public event ProgressUpdate OnProgressUpdate;
 
         public void ParseJson(string filename, List<string> priorities, bool includeTables)
         {
+            int tempInt;
+
             schemaNames.Clear();
 
             this.includeTables = includeTables;
@@ -83,10 +100,25 @@ namespace KDRS_Metadata
             tableCount = 0;
             totalTableCount = template.TemplateSchema.Tables.Count;
 
+            thisSchemaNo = 0;
             if (includeTables)
             {
+                for (int n = 0; n < 3; n++)
+                {
+                    arrayTableCounters[thisSchemaNo, n] = 0;
+                }
+                for (int n = 0; n < 8; n++)
+                {
+                    arrayKeysCounters[thisSchemaNo, n] = 0;
+                }
+
                 foreach (Table table in template.TemplateSchema.Tables)
                 {
+                    arrayTableCounters[thisSchemaNo, 0] += table.Rows;
+                    if (table.Rows > arrayTableCounters[thisSchemaNo, 1])
+                        arrayTableCounters[thisSchemaNo, 1] = table.Rows;
+                    Console.WriteLine("tableRows = " + table.Rows);
+
                     if (priorities.Contains(table.TablePriority))
                     {
 
@@ -99,6 +131,11 @@ namespace KDRS_Metadata
                     tableCount++;
 
                     OnProgressUpdate?.Invoke(tableCount, totalTableCount, template.TemplateSchema.Folder +": "+ template.TemplateSchema.Name +"  |  "+ table.Name);
+                }
+
+                for (int n = 0; n < 8; n++)
+                {
+                    Console.WriteLine(thisSchemaNo + "." + n + " = " + arrayKeysCounters[thisSchemaNo, n].ToString());
                 }
             }
             xlWorkBook.Sheets[1].Select();
@@ -503,8 +540,13 @@ namespace KDRS_Metadata
                 cellCount++;
             }
             // Primary keys
-            if (table.PrimaryKey != null)
+            if (table.PrimaryKey == null)
             {
+                arrayKeysCounters[thisSchemaNo, 3]++;  // noPKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 0]++;  // PKs == (yesPKs)
                 tempRng = tableWorksheet.Cells[cellCount, 1];
                 tempRng.Interior.Color = Color.LightGray;
 
@@ -552,10 +594,16 @@ namespace KDRS_Metadata
             Console.WriteLine("fKEYS");
 
             // Foreign keys
-            if (table.ForeignKeys != null)
+            if (table.ForeignKeys == null)
             {
+                arrayKeysCounters[thisSchemaNo, 4]++;  // noFKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 6]++;  // yesFKs
                 foreach (ForeignKey fkey in table.ForeignKeys)
                 {
+                    arrayKeysCounters[thisSchemaNo, 1]++;  // FKs
                     tempRng = tableWorksheet.Cells[cellCount, 1];
                     tempRng.Interior.Color = Color.LightPink;
 
@@ -630,10 +678,16 @@ namespace KDRS_Metadata
             Console.WriteLine("cKEYS");
 
             // Candidate keys
-            if (table.CandidateKeys != null)
+            if (table.CandidateKeys == null)
             {
+                arrayKeysCounters[thisSchemaNo, 5]++;  // noCKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 7]++;  // yesCKs
                 foreach (CandidateKey ckey in table.CandidateKeys)
                 {
+                    arrayKeysCounters[thisSchemaNo, 2]++;  // CKs
                     tempRng = tableWorksheet.Cells[cellCount, 1];
                     tempRng.Interior.Color = Color.PaleTurquoise;
 

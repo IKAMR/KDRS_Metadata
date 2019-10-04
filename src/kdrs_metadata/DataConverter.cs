@@ -18,12 +18,13 @@ namespace KDRS_Metadata
         public string excelFileName;
         public string siardVersion;
 
+        // ToDo: Replace hardcoded array 30 schemas with actual number of schemas
         public int thisSchemaNo;
 
         // #1: Schema number [0..n]
-        // #2: Row counters number [0..1]
-        //     Total rows, Max rows one table
-        public int[,] arrayRowCounters = new int[30, 1];
+        // #2: Table counters number [0..2]
+        //     Total rows, Max rows one table, Max columns one table
+        public int[,] arrayTableCounters = new int[30, 3];
 
         // #1: Schema number [0..n]
         // #2: Counter number [0..7]
@@ -36,6 +37,8 @@ namespace KDRS_Metadata
 
         public void Convert(string filename, bool includeTables)
         {
+            int tempInt;
+
             schemaNames.Clear();
 
             Application xlApp1 = new Application
@@ -90,6 +93,10 @@ namespace KDRS_Metadata
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
                 Console.WriteLine("Enter schema");
 
+                for (int n = 0; n < 3; n++)
+                {
+                    arrayTableCounters[thisSchemaNo, n] = 0;
+                }
                 for (int n = 0; n < 8; n++)
                 {
                     arrayKeysCounters[thisSchemaNo, n] = 0;
@@ -99,6 +106,12 @@ namespace KDRS_Metadata
                 {
                     foreach (XmlNode table in tables.ChildNodes)
                     {
+                        tempInt = Int32.Parse(getInnerText(table["rows"]));
+                        arrayTableCounters[thisSchemaNo, 0] += tempInt;
+                        if (tempInt > arrayTableCounters[thisSchemaNo, 1])
+                            arrayTableCounters[thisSchemaNo, 1] = tempInt;
+                        Console.WriteLine("tableRows = " + tempInt);
+
                         string tableName = getInnerText(table["name"]);
                         Worksheet tableWorksheet = xlWorksheets.Add(After: xlWorksheets[xlWorksheets.Count]);
 
@@ -238,7 +251,7 @@ namespace KDRS_Metadata
                 DBWorksheet.Cells[cnt, 1] = field;
                 if (i == 11)
                 {
-                    DBWorksheet.Cells[cnt, 2] = "**********";
+                    DBWorksheet.Cells[cnt, 2] = SensitiveString(GetNodeText(table, "//siard:" + field, nsmgr));
                 }
                 else
                 {
@@ -447,6 +460,7 @@ namespace KDRS_Metadata
                 "rows"
             };
 
+            thisSchemaNo = 0;
             int count = 2;
             foreach (XmlNode schema in schemas)
             {
@@ -484,7 +498,7 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
 
                     string tableRows = getInnerText(table["rows"]);
-                    tableOverviewWorksheet.Cells[count, 4] = tableRows;
+                    tableOverviewWorksheet.Cells[count, 4] = tableRows;                    
 
                     string tableColumns = getChildCount(table["columns"]);
                     tableOverviewWorksheet.Cells[count, 5] = tableColumns;
@@ -505,7 +519,8 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_description, "description");
 
                     count++;
-                }                
+                }
+                thisSchemaNo++;
             }            
 
             // Freeze Panes
@@ -1079,7 +1094,7 @@ namespace KDRS_Metadata
                 if (node != null)
                 {
                     varName = node.InnerText;
-                    if (varName == "" && query != "descendant::siard:deleteAction" && query != "descendant::siard:updateAction")
+                    if (string.IsNullOrEmpty(varName) && query != "descendant::siard:deleteAction" && query != "descendant::siard:updateAction")
                         varName = "[EMPTY]";
                 }
             }
@@ -1111,7 +1126,7 @@ namespace KDRS_Metadata
             if (table != null)
             {
                 varName = table.InnerText;
-                if (varName == "")
+                if (string.IsNullOrEmpty(varName))
                     varName = "[EMPTY]";
             }
             return varName;
