@@ -343,7 +343,7 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS Metadata";
-        public static readonly String toolVersion = "0.9.4";
+        public static readonly String toolVersion = "0.9.5-rc1";
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public static int PriSort(string priority)
