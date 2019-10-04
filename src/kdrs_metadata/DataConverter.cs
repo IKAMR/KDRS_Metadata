@@ -489,12 +489,9 @@ namespace KDRS_Metadata
                     string tableColumns = getChildCount(table["columns"]);
                     tableOverviewWorksheet.Cells[count, 5] = tableColumns;
 
-                    string tablePriority = "";
-                    if (tableRows == "0")
+                    string tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
+                    if (string.IsNullOrEmpty(tablePriority) && tableRows == "0")
                         tablePriority = "EMPTY";
-                    else
-                        tablePriority = GetNodeTxtEmpty(table, "descendant::siard:priority", nsmgr);
-
                     tableOverviewWorksheet.Cells[count, 6] = tablePriority;
                     
                     /* int tablePriSort = Globals.PriSort(tablePriority);

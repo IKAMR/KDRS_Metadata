@@ -323,7 +323,7 @@ namespace KDRS_Metadata
             {
                 Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
                 GetEntity(table.Description, table);
-                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+                Console.WriteLine("Table: " + table.Name + ", Description2: " + table.Description);
 
                 if (priorities.Contains(table.TablePriority))
                 {
@@ -350,10 +350,11 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
                     tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
-                    if (table.TablePriority == "" && table.Rows == 0)
-                        tableOverviewWorksheet.Cells[count, 6] = "EMPTY";
-                    else
-                        tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
+
+                    Console.WriteLine("Table priority: " + table.TablePriority + ", Rows: " + table.Rows);
+                    if (string.IsNullOrEmpty(table.TablePriority) && table.Rows == 0)
+                        table.TablePriority = "EMPTY";
+                    tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
 
                     // Pri sort
                     //tableOverviewWorksheet.Cells[count, 7] = Globals.PriSort(table.TablePriority);
