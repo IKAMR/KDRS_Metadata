@@ -24,11 +24,28 @@ namespace KDRS_Metadata
 
         public bool includeTables;
 
-        public delegate void ProgressUpdate(int count, int totalCount);
+        // Info: JSON template is pr. date only ONE schema
+        // Though keep array to make exact alike programming as metadata.xml multiple schemas
+        public int thisSchemaNo = 0;
+
+        // #1: Schema number [0..n]
+        // #2: Table counters number [0..2]
+        //     Total rows, Max rows one table, Max columns one table
+        public int[,] arrayTableCounters = new int[1, 3];
+
+        // #1: Schema number [0..0]
+        // #2: Counter number [0..7]
+        //     PKs, FKs, CKs, noPKs, noFKs, noCKs, yesFKs, yesCKs
+
+        public int[,] arrayKeysCounters = new int[1, 8];
+
+        public delegate void ProgressUpdate(int count, int totalCount, string progressPostfix);
         public event ProgressUpdate OnProgressUpdate;
 
         public void ParseJson(string filename, List<string> priorities, bool includeTables)
         {
+            int tempInt;
+
             schemaNames.Clear();
 
             this.includeTables = includeTables;
@@ -83,10 +100,25 @@ namespace KDRS_Metadata
             tableCount = 0;
             totalTableCount = template.TemplateSchema.Tables.Count;
 
+            thisSchemaNo = 0;
             if (includeTables)
             {
+                for (int n = 0; n < 3; n++)
+                {
+                    arrayTableCounters[thisSchemaNo, n] = 0;
+                }
+                for (int n = 0; n < 8; n++)
+                {
+                    arrayKeysCounters[thisSchemaNo, n] = 0;
+                }
+
                 foreach (Table table in template.TemplateSchema.Tables)
                 {
+                    arrayTableCounters[thisSchemaNo, 0] += table.Rows;
+                    if (table.Rows > arrayTableCounters[thisSchemaNo, 1])
+                        arrayTableCounters[thisSchemaNo, 1] = table.Rows;
+                    Console.WriteLine("tableRows = " + table.Rows);
+
                     if (priorities.Contains(table.TablePriority))
                     {
 
@@ -98,7 +130,12 @@ namespace KDRS_Metadata
                     }
                     tableCount++;
 
-                    OnProgressUpdate?.Invoke(tableCount, totalTableCount);
+                    OnProgressUpdate?.Invoke(tableCount, totalTableCount, template.TemplateSchema.Folder +": "+ template.TemplateSchema.Name +"  |  "+ table.Name);
+                }
+
+                for (int n = 0; n < 8; n++)
+                {
+                    Console.WriteLine(thisSchemaNo + "." + n + " = " + arrayKeysCounters[thisSchemaNo, n].ToString());
                 }
             }
             xlWorkBook.Sheets[1].Select();
@@ -240,16 +277,16 @@ namespace KDRS_Metadata
             tempRng.Characters.Font.Bold = true;
             tempRng.Interior.Color = Color.LightGray;
 
-            tempRng = DBWorksheet.Range["A3", "B6"];
-            tempRng.Characters.Font.Color = Color.Red;
+            // tempRng = DBWorksheet.Range["A3", "B6"];
+            // tempRng.Characters.Font.Color = Color.Red;
 
-            tempRng = DBWorksheet.Range["B3", "B6"];
+            tempRng = DBWorksheet.Range["A3", "B6"];
             tempRng.Interior.Color = Color.LightYellow;
 
-            tempRng = DBWorksheet.Range["A7", "B7"];
-            tempRng.Characters.Font.Color = Color.Orange;
+            // tempRng = DBWorksheet.Range["A7", "B7"];
+            // tempRng.Characters.Font.Color = Color.Orange;
 
-            tempRng = DBWorksheet.Range["B7", "B7"];
+            tempRng = DBWorksheet.Range["A7", "B7"];
             tempRng.Interior.Color = Color.LightSkyBlue;
 
             tempRng = DBWorksheet.Range["A10", "B10"];
@@ -323,7 +360,7 @@ namespace KDRS_Metadata
             {
                 Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
                 GetEntity(table.Description, table);
-                Console.WriteLine("Table: " + table.Name + ", Description: " + table.Description);
+                Console.WriteLine("Table: " + table.Name + ", Description2: " + table.Description);
 
                 if (priorities.Contains(table.TablePriority))
                 {
@@ -350,6 +387,10 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 3] = schema.Name;
                     tableOverviewWorksheet.Cells[count, 4] = table.Rows;
                     tableOverviewWorksheet.Cells[count, 5] = table.Columns.Count;
+
+                    Console.WriteLine("Table priority: " + table.TablePriority + ", Rows: " + table.Rows);
+                    if (string.IsNullOrEmpty(table.TablePriority) && table.Rows == 0)
+                        table.TablePriority = "EMPTY";
                     tableOverviewWorksheet.Cells[count, 6] = table.TablePriority;
 
                     // Pri sort
@@ -499,8 +540,13 @@ namespace KDRS_Metadata
                 cellCount++;
             }
             // Primary keys
-            if (table.PrimaryKey != null)
+            if (table.PrimaryKey == null)
             {
+                arrayKeysCounters[thisSchemaNo, 3]++;  // noPKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 0]++;  // PKs == (yesPKs)
                 tempRng = tableWorksheet.Cells[cellCount, 1];
                 tempRng.Interior.Color = Color.LightGray;
 
@@ -548,10 +594,16 @@ namespace KDRS_Metadata
             Console.WriteLine("fKEYS");
 
             // Foreign keys
-            if (table.ForeignKeys != null)
+            if (table.ForeignKeys == null)
             {
+                arrayKeysCounters[thisSchemaNo, 4]++;  // noFKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 6]++;  // yesFKs
                 foreach (ForeignKey fkey in table.ForeignKeys)
                 {
+                    arrayKeysCounters[thisSchemaNo, 1]++;  // FKs
                     tempRng = tableWorksheet.Cells[cellCount, 1];
                     tempRng.Interior.Color = Color.LightPink;
 
@@ -626,10 +678,16 @@ namespace KDRS_Metadata
             Console.WriteLine("cKEYS");
 
             // Candidate keys
-            if (table.CandidateKeys != null)
+            if (table.CandidateKeys == null)
             {
+                arrayKeysCounters[thisSchemaNo, 5]++;  // noCKs
+            }
+            else
+            {
+                arrayKeysCounters[thisSchemaNo, 7]++;  // yesCKs
                 foreach (CandidateKey ckey in table.CandidateKeys)
                 {
+                    arrayKeysCounters[thisSchemaNo, 2]++;  // CKs
                     tempRng = tableWorksheet.Cells[cellCount, 1];
                     tempRng.Interior.Color = Color.PaleTurquoise;
 
@@ -992,11 +1050,54 @@ namespace KDRS_Metadata
             Name = name;
             Folder = folder;
         }
+        public int rowsCount()
+        {
+            int rows = 0;
+            foreach(Table table in Tables)
+            {
+                rows += table.Rows;
+            }
+            return rows;
+        }
+
+        // ToDo 2019-09-24 TFA TAA: Restructure Table as class for XML (DataConverter.cs)
+        // Now QuickFix parse add counters in the PK/FK/CK loops JSON & XML
+
+        /* public int countPK()
+        {
+            int countPK = 0;
+            foreach (Table table in Tables)
+            {
+                if (table.PrimaryKey != null)
+                    countPK++;
+            }
+            return countPK;
+        }
+        public int countFK()
+        {
+            int countFK = 0;
+            foreach (Table table in Tables)
+            {
+                if (table.ForeignKeys != null)
+                    countFK += table.ForeignKeys.Count;
+            }
+            return countFK;
+        }
+        public int countCK()
+        {
+            int countCK = 0;
+            foreach (Table table in Tables)
+            {
+                if (table.CandidateKeys != null)
+                    countCK += table.CandidateKeys.Count;
+            }
+            return countCK;
+        } */
 
         public List<Table> Tables { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public string Folder { get; set; }
+        public string Folder { get; set; }        
     }
 
     public class Table

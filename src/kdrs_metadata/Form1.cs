@@ -23,7 +23,7 @@ namespace KDRS_Metadata
 
         List<string> resultList = new List<string>();
 
-        string inputFileName;
+        string inputFileName;        
 
         public Form1()
         {
@@ -104,15 +104,21 @@ namespace KDRS_Metadata
                 {
                     textBox1.AppendText("\r\n" + l);
                 }
+
+                string inputFolder = Path.GetDirectoryName(inputFileName);
+                string filename = Path.Combine(inputFolder, Path.GetFileNameWithoutExtension(inputFileName) + "_log_" + DateTime.Now.ToString("yyyy-MM-dd-HHmm") + ".txt");
+
+                File.WriteAllText(filename, textBox1.Text);
+
                 KillExcel();
             }
         }
 
-        private void reader_OnProgressUpdate(int value, int total)
+        private void reader_OnProgressUpdate(int value, int total, string countPostfix)
         {
             base.Invoke((System.Action)delegate
             {
-                textBox1.Text = "Table " + value + " of " + total;
+                textBox1.Text = "Table " + value + " of " + total + " [ " + countPostfix + " ]";
             });
         }
 
@@ -123,6 +129,7 @@ namespace KDRS_Metadata
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+            int schemaNo;
 
             CheckPrioList();
             
@@ -148,9 +155,22 @@ namespace KDRS_Metadata
                         resultList.Add("Target: " + jsonReader.excelFileName);
                         resultList.Add("Tables: " + jsonReader.tableCount);
 
+                        schemaNo = 0;
                         foreach (Schema schema in jsonReader.schemaNames)
                         {
-                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
+                            string output = schema.Folder + ": " + schema.Name + ", rows: " + schema.rowsCount()
+                            + ", Total rows: " + jsonReader.arrayTableCounters[schemaNo, 0].ToString()
+                            + ", Max rows: " + jsonReader.arrayTableCounters[schemaNo, 1].ToString()
+                            + ", PKs: " + jsonReader.arrayKeysCounters[schemaNo, 0].ToString()
+                            + ", FKs: " + jsonReader.arrayKeysCounters[schemaNo, 1].ToString()
+                            + ", CKs: " + jsonReader.arrayKeysCounters[schemaNo, 2].ToString()
+                            + ", noPKs: " + jsonReader.arrayKeysCounters[schemaNo, 3].ToString()
+                            + ", noFKs: " + jsonReader.arrayKeysCounters[schemaNo, 4].ToString()
+                            + ", noCKs: " + jsonReader.arrayKeysCounters[schemaNo, 5].ToString()
+                            + ", yesFKs: " + jsonReader.arrayKeysCounters[schemaNo, 6].ToString()
+                            + ", yesCKs: " + jsonReader.arrayKeysCounters[schemaNo, 7].ToString();
+                            resultList.Add(output);
+                            schemaNo++;
                         }
 
                         break;
@@ -166,11 +186,25 @@ namespace KDRS_Metadata
                         resultList.Add("Target: " + converter.excelFileName);
                         resultList.Add("Tables: " + converter.totalTableCount);
 
+                        schemaNo = 0;
                         foreach (Schema schema in converter.schemaNames)
                         {
-                            resultList.Add(schema.Folder + "   Name: " + schema.Name);
+                            string output = schema.Folder + ": " + schema.Name
+                                + ", Total rows: " + converter.arrayTableCounters[schemaNo, 0].ToString()
+                                + ", Max rows: " + converter.arrayTableCounters[schemaNo, 1].ToString()
+                                + ", PKs: " + converter.arrayKeysCounters[schemaNo, 0].ToString()
+                                + ", FKs: " + converter.arrayKeysCounters[schemaNo, 1].ToString()
+                                + ", CKs: " + converter.arrayKeysCounters[schemaNo, 2].ToString()
+                                + ", noPKs: " + converter.arrayKeysCounters[schemaNo, 3].ToString()
+                                + ", noFKs: " + converter.arrayKeysCounters[schemaNo, 4].ToString()
+                                + ", noCKs: " + converter.arrayKeysCounters[schemaNo, 5].ToString()
+                                + ", yesFKs: " + converter.arrayKeysCounters[schemaNo, 6].ToString()
+                                + ", yesCKs: " + converter.arrayKeysCounters[schemaNo, 7].ToString();                                                            
+                            resultList.Add(output);
+                            // + ", PKs: " + schema.countPK() + ", FKs: " + schema.countFK() + ", CKs: " + schema.countCK();
+                            // Console.WriteLine("Schema: " + schema.Name + ", rows: " + schema.rowsCount());
+                            schemaNo++;
                         }
-
                         
                         break;
                 }
@@ -309,7 +343,7 @@ namespace KDRS_Metadata
     public static class Globals
     {
         public static readonly String toolName = "KDRS Metadata";
-        public static readonly String toolVersion = "0.9.3";
+        public static readonly String toolVersion = "0.9.4";
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public static int PriSort(string priority)
