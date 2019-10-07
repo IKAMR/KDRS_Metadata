@@ -1041,6 +1041,7 @@ namespace KDRS_Metadata
         public double CreationDate { get; set; }
         public string TemplateVisibility { get; set; }
         public Schema TemplateSchema { get; set; }
+        public List<Schema> TemplateSchemaList { get; set; }
     }
 
     public class Schema
@@ -1094,20 +1095,20 @@ namespace KDRS_Metadata
             return countCK;
         } */
 
-        public List<Table> Tables { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public string Folder { get; set; }        
+        public string Folder { get; set; }
+        public List<Table> Tables { get; set; }
     }
 
     public class Table
     {
         public string Name { get; set; }
-        public string TablePriority { get; set; }
-        public string TableEntity { get; set; }
+        public string Description { get; set; }
         public string Folder { get; set; }
         public int Rows { get; set; }
-        public string Description { get; set; }
+        public string TablePriority { get; set; }
+        public string TableEntity { get; set; }
         public List<Column> Columns { get; set; }
         public PrimaryKey PrimaryKey { get; set; }
         public List<ForeignKey> ForeignKeys { get; set; }

@@ -41,9 +41,78 @@ namespace KDRS_Metadata
             inputTemplate.SystemVersion = outputSheet.Cells[7, 2].Text;
             inputTemplate.Creator = outputSheet.Cells[8, 2].Text;
             inputTemplate.Organizations = new List<string>();
-            inputTemplate.Organizations.Add(outputSheet.Cells[9, 2].Text);
-            //inputTemplate.CreationDate = Convert.ToDouble(outputSheet.Cells[2, 10].Text);
-            inputTemplate.TemplateVisibility = outputSheet.Cells[11, 2].Text;
+
+            int counter = 9;
+            while ("creationDate" != outputSheet.Cells[counter, 1].Text)
+            {
+                inputTemplate.Organizations.Add(outputSheet.Cells[counter, 2].Text);
+                counter++;
+            }
+            //inputTemplate.CreationDate = outputSheet.Cells[10, 2].Value;
+            counter++;
+
+            inputTemplate.TemplateVisibility = outputSheet.Cells[counter, 2].Text;
+            counter++;
+
+            Worksheet tablesSheet = xlWorksheets["tables"];
+
+            Range column = tablesSheet.UsedRange.Columns["C:C", Type.Missing].Cells;
+            int tableCount = column.Count - 1;
+
+            // Get distinct schemaNames
+            HashSet<string> schemaNames = new HashSet<string>();
+            bool firstRow = true;
+            foreach (Range row in column)
+            {
+                if (firstRow)
+                    firstRow = false;
+                else
+                    schemaNames.Add(row.Text);
+            }
+
+            // Make list of schemas
+            inputTemplate.TemplateSchemaList = new List<Schema>();
+            foreach (string name in schemaNames)
+            {
+                Schema tableSchema = new Schema(name, "")
+                {
+                    Tables = new List<Table>()
+                };
+
+                for (int i = 4; i <= tableCount; i++)
+                {
+                    Worksheet tableSheet = xlWorksheets[i];
+
+                    if (tableSheet.Cells[2, 2].Text != tableSchema.Name)
+                        break;
+                    else
+                    {
+                        tableSchema.Folder = tableSheet.Cells[3, 2].Text;
+                        tableSchema.Tables.Add(new Table
+                        {
+                            Name = tableSheet.Cells[4, 2].Text,
+                            Folder = tableSheet.Cells[5, 2].Text,
+                            TablePriority = tableSheet.Cells[6, 2].Text,
+                            TableEntity = tableSheet.Cells[7, 2].Text,
+                            Description = tableSheet.Cells[8, 2].Text,
+                            //Rows = tableSheet.Cells[9, 2].Text,
+                            PrimaryKey = new PrimaryKey
+                            {
+                                Name = tableSheet.Cells[11, 2].Text,
+                                //Columns = "",
+                                Description = tableSheet.Cells[3, 2].Text
+
+                            }
+                        });
+
+                    }
+
+                }
+
+                inputTemplate.TemplateSchemaList.Add(tableSchema);
+            }
+
+
 
             Console.WriteLine("Input tamplate neme: " + inputTemplate.Name);
 
