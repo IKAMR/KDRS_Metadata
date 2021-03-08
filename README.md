@@ -10,6 +10,6 @@ The dialog window shows the progress and finalize writing the Excel output file 
 
 Feedbacks, bugs, suggested changes or improvements may be sent as GitHub Issues.
 
-Elle by email to:
-Tore Fadnes <tore.fadnes@ikamr.no>
-Torbjørn Aasen <torbjorn.aasen@ikamr.no>
+Or by email to:
+- Tore Fadnes <tore.fadnes@ikamr.no>
+- Torbjørn Aasen <torbjorn.aasen@ikamr.no>
