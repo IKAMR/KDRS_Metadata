@@ -1,10 +1,15 @@
 # KDRS_Metadata
 
-KDRS Metadata er utviklet for å gjøre det lettere å analysere metadata-filer fra siard-pakker ved å lese filene og konvertere dem til 
-et oversiktlig format i Excel.
-Programmet kan også lese json-malfiler produsert av Documaster Decom.
+KDRS Metadata is developed as an aid to analyze and describe the Database schema, table, column and keys elements of metadata.xml from a SIARD extraction, or Documaster Decom JSON template that have imported a SIARD extraction for descriptions and preservation.
 
-Man starter konverteringen ved å trekke ønsket metadata.xml eller .json over til programvinduet og sleppe dem der.
-Resultatet fra konverteringen blir plassert i samme mappe som input-filen.
+The main outpot target format is an Excel spreadsheet.
+Prerequisite: Microsoft Excel (standalone or within the MS Office pacakge).
 
-Ved spørsmål, ta kontakt med Tore Fadnes ved IKAMR (tore.fadnes@ikamr.no).
+Usage: Drop the metadata.xml or Decom JSON template onto the app dialog window.
+The dialog window shows the progress and finalize writing the Excel output file and the logfile into the same folder as the input file was located.
+
+Feedbacks, bugs, suggested changes or improvements may be sent as GitHub Issues.
+
+Or by email to:
+- Tore Fadnes <tore.fadnes@ikamr.no>
+- Torbjørn Aasen <torbjorn.aasen@ikamr.no>
