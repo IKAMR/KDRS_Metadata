@@ -701,10 +701,9 @@ namespace KDRS_Metadata
                 string pk_decription = GetNodeTxtEmpty(table["primaryKey"], "descendant::siard:description", nsmgr);
                 string pk_extr_entity = ExtractEntity(pk_decription, "entity");
                 string pk_extr_description = ExtractEntity(pk_decription, "description");
-                rowNamesArray = new string[4][] 
+                rowNamesArray = new string[3][] 
                 {
                     new string[2] { "pkName", primaryKey_name },
-                    new string[2] { "pkColumn", primaryKey_column },
                     new string[2] { "pkEntity", pk_extr_entity},
                     new string[2] { "pkDescription", pk_extr_description }
                     // new string[2] { "pkDescription", GetNodeText(table["primaryKey"], "descendant::siard:description", nsmgr) }
@@ -724,6 +723,16 @@ namespace KDRS_Metadata
 
                     tempRng = tableWorksheet.Cells[cellCount - 1, n];
                     tempRng.Interior.Color = Color.LightSkyBlue;
+                }
+                
+                XmlNode pKey = table.SelectSingleNode("descendant::siard:primaryKey", nsmgr);
+
+                for (int i = 1; i < pKey.ChildNodes.Count; i++)
+                {
+                    string primaryKey_column1 = GetNodeText(table["primaryKey"], "descendant::siard:column[" + i + "]", nsmgr);
+                    tableWorksheet.Cells[cellCount, 1] = "pkColumn";
+                    tableWorksheet.Cells[cellCount, 2] = primaryKey_column1;
+                    cellCount++;
                 }
             }
 

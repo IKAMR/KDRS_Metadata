@@ -8,8 +8,6 @@ Prerequisite: Microsoft Excel (standalone or within the MS Office pacakge).
 Usage: Drop the metadata.xml or Decom JSON template onto the app dialog window.
 The dialog window shows the progress and finalize writing the Excel output file and the logfile into the same folder as the input file was located.
 
-Known bug to be fixed: Composed Keys (consists of more than one column) is not fully shown in Excel (only first column).
-
 Feedbacks, bugs, suggested changes or improvements may be sent as GitHub Issues.
 
 Or by email to:
