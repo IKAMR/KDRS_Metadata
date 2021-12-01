@@ -1,0 +1,5 @@
+
+Source: C:\developer\c#\kdrs_metadata\doc\metadata_mult_pk.xml
+Target: C:\developer\c#\kdrs_metadata\doc\metadata_mult_pk.xlsx
+Tables: 6
+schema0: testdb04, Total rows: 35, Max rows: 9, PKs: 6, FKs: 7, CKs: 5, noPKs: 0, noFKs: 0, noCKs: 1, yesFKs: 6, yesCKs: 5
