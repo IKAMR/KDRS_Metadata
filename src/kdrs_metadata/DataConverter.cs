@@ -35,6 +35,7 @@ namespace KDRS_Metadata
         public delegate void ProgressUpdate(int count, int totalCount, string progressPostfix);
         public event ProgressUpdate OnProgressUpdate;
 
+
         public void Convert(string filename, bool includeTables)
         {
             int tempInt;
@@ -465,12 +466,12 @@ namespace KDRS_Metadata
             foreach (XmlNode schema in schemas)
             {
                 XmlNode tables = schema.SelectSingleNode("descendant::siard:tables", nsmgr);
-                string schemaNumber = GetNumbers(schema["folder"].InnerText);                
+                string schemaNumber = GetNumbers(schema["folder"].InnerText);
 
                 foreach (XmlNode table in tables.ChildNodes)
                 {
                     string name = table["name"].InnerText;
-                    string folder = GetNumbers(table["folder"].InnerText);                    
+                    string folder = GetNumbers(table["folder"].InnerText);
                     if (includeTables)
                     {
                         Range c1 = tableOverviewWorksheet.Cells[count, 1];
@@ -498,7 +499,7 @@ namespace KDRS_Metadata
                     tableOverviewWorksheet.Cells[count, 3] = table.ParentNode.ParentNode["folder"].InnerText;
 
                     string tableRows = getInnerText(table["rows"]);
-                    tableOverviewWorksheet.Cells[count, 4] = tableRows;                    
+                    tableOverviewWorksheet.Cells[count, 4] = tableRows;
 
                     string tableColumns = getChildCount(table["columns"]);
                     tableOverviewWorksheet.Cells[count, 5] = tableColumns;
@@ -507,102 +508,29 @@ namespace KDRS_Metadata
                     if (string.IsNullOrEmpty(tablePriority) && tableRows == "0")
                         tablePriority = "EMPTY";
                     tableOverviewWorksheet.Cells[count, 6] = tablePriority;
-                    
+
                     /* int tablePriSort = Globals.PriSort(tablePriority);
                      tableOverviewWorksheet.Cells[count, 7] = tablePriSort;
                      */
 
                     string table_entity = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
                     tableOverviewWorksheet.Cells[count, 7] = ExtractEntity(table_entity, "entity");
-                    
-                    string table_description = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
+
+                    string table_description = GetNodeTxtEmpty(table, @"siard:description", nsmgr);
                     tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_description, "description");
 
                     count++;
                 }
                 thisSchemaNo++;
-            }            
+            }
 
             // Freeze Panes
-            tempRng = tableOverviewWorksheet.Cells[2, 1];
-            tempRng.Activate();
-            tempRng.Application.ActiveWindow.FreezePanes = true;
+            FormatExcel.FormatTableOverviewCells(tableOverviewWorksheet, count);
 
-            tempRng = tableOverviewWorksheet.Range["A1", "I1"];
-            tempRng.Characters.Font.Bold = true;
-
-            // Border lines
-            for (int n = 1; n < 10; n++)                
-            {
-                if (n < 6)
-                {
-                    tempRng = tableOverviewWorksheet.Cells[1, n];
-                    tempRng.Interior.Color = Color.LightGray;
-                }
-
-                for (int m = 1; m < count; m++)
-                {
-                    tempRng = tableOverviewWorksheet.Cells[m, n];
-                    tempRng.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = XlLineStyle.xlContinuous;
-                    tempRng.Borders[XlBordersIndex.xlEdgeRight].LineStyle = XlLineStyle.xlContinuous;
-                    tempRng.Borders[XlBordersIndex.xlEdgeTop].LineStyle = XlLineStyle.xlContinuous;
-                    tempRng.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = XlLineStyle.xlContinuous;                    
-                }
-            }
-
-            // Cell background color
-            for (int m = 1; m < count; m++)
-            {
-                tempRng = tableOverviewWorksheet.Cells[m, 6];
-                tempRng.Interior.Color = Color.LightYellow;
-
-                tempRng = tableOverviewWorksheet.Cells[m, 7];
-                tempRng.Interior.Color = Color.LightGreen;
-
-                tempRng = tableOverviewWorksheet.Cells[m, 8];
-                tempRng.Interior.Color = Color.LightSkyBlue;
-
-                tempRng = tableOverviewWorksheet.Cells[m, 9];
-                tempRng.Interior.Color = Color.LightGray;
-            }
-
-            // Alignment
-            tableOverviewWorksheet.Columns.HorizontalAlignment = XlHAlign.xlHAlignLeft;
-            tableOverviewWorksheet.Columns.VerticalAlignment = XlVAlign.xlVAlignCenter;
-
-            // Column widths
-            tableOverviewWorksheet.Columns["A:A"].AutoFit();
-            tableOverviewWorksheet.Columns["B:B"].AutoFit();  // .ColumnWidth = 8;
-            tableOverviewWorksheet.Columns["C:C"].AutoFit();  // .ColumnWidth = 8;
-
-            tableOverviewWorksheet.Columns["D:D"].AutoFit();
-            tableOverviewWorksheet.Columns["D:D"].HorizontalAlignment = XlHAlign.xlHAlignCenter;
-
-            tableOverviewWorksheet.Columns["E:E"].AutoFit();
-            tableOverviewWorksheet.Columns["E:E"].HorizontalAlignment = XlHAlign.xlHAlignCenter;
-
-            tableOverviewWorksheet.Columns["F:F"].ColumnWidth = 10;
-            tableOverviewWorksheet.Columns["F:F"].HorizontalAlignment = XlHAlign.xlHAlignCenter;
-
-            tableOverviewWorksheet.Columns["G:G"].ColumnWidth = 20;
-            tableOverviewWorksheet.Columns["G:G"].WrapText = true;
-
-            tableOverviewWorksheet.Columns["H:H"].ColumnWidth = 60;
-            tableOverviewWorksheet.Columns["H:H"].WrapText = true;
-
-            tableOverviewWorksheet.Columns["I:I"].ColumnWidth = 60;
-            tableOverviewWorksheet.Columns["I:I"].WrapText = true;
-
-            // Column sorting
-            tableOverviewWorksheet.Sort.SortFields.Clear();
-
-            tableOverviewWorksheet.Sort.SortFields.Add(tableOverviewWorksheet.Range["F:F"], XlSortOn.xlSortOnValues, XlSortOrder.xlAscending, "HIGH, MEDIUM, LOW, SYSTEM, STATS, EMPTY, DUMMY", XlSortDataOption.xlSortNormal);
-            tableOverviewWorksheet.Sort.SetRange(tableOverviewWorksheet.UsedRange);
-            tableOverviewWorksheet.Sort.Header = XlYesNoGuess.xlYes;
-            tableOverviewWorksheet.Sort.Apply();
-            
             Marshal.ReleaseComObject(tableOverviewWorksheet);
         }
+
+      
 
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         // Creates a Worksheet with information for each table
@@ -1118,7 +1046,7 @@ namespace KDRS_Metadata
             if (table != null)
             {
                 XmlNode node = table.SelectSingleNode(query, nsmgr);
-                if (node != null)
+                if (node != null && node.ParentNode.Equals(table))
                 {
                     text = node.InnerText;
                 }
