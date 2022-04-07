@@ -516,7 +516,7 @@ namespace KDRS_Metadata
                     string table_entity = GetNodeTxtEmpty(table, "descendant::siard:description", nsmgr);
                     tableOverviewWorksheet.Cells[count, 7] = ExtractEntity(table_entity, "entity");
 
-                    string table_description = GetNodeTxtEmpty(table, @"siard:description", nsmgr);
+                    string table_description = GetChildNodeTxtEmpty(table, @"siard:description", nsmgr);
                     tableOverviewWorksheet.Cells[count, 8] = ExtractEntity(table_description, "description");
 
                     count++;
@@ -1046,13 +1046,28 @@ namespace KDRS_Metadata
             if (table != null)
             {
                 XmlNode node = table.SelectSingleNode(query, nsmgr);
-                if (node != null && node.ParentNode.Equals(table))
+                if (node != null)
                 {
                     text = node.InnerText;
                 }
             }
 
                     return text;
+        }
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        private string GetChildNodeTxtEmpty(XmlNode table, string query, XmlNamespaceManager nsmgr)
+        {
+            string text = "";
+            if (table != null)
+            {
+                XmlNode node = table.SelectSingleNode(query, nsmgr);
+                if (node != null && node.ParentNode.Equals(table))
+                {
+                    text = node.InnerText;
+                }
+            }
+
+            return text;
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
